@@ -4,7 +4,13 @@
  * This generated file contains a sample Java application project to get you started.
  * For more details on building Java & JVM projects, please refer to https://docs.gradle.org/9.2.0/userguide/building_java_projects.html in the Gradle documentation.
  */
-val jdaVersion = "6.3.0" // 
+ //Versions
+
+val jdaVersion = "6.3.0"
+val logbackClassicVersion = "1.5.6"
+val javaDotenvVersion = "5.2.2"
+val lavaplayerVersion = "2.2.6"
+val lavalinkYoutubeVersion = "1.17.0"
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
@@ -16,15 +22,18 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+
+    // Stupid lavalink
+     maven(url = "https://maven.lavalink.dev/releases")
 }
 
 dependencies {
     implementation("net.dv8tion:JDA:$jdaVersion")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
-    implementation("io.github.cdimascio:java-dotenv:5.2.2")
-    implementation("dev.arbjerg:lavaplayer:2.2.6")
-    implementation("dev.lavalink.youtube:common:1.17.0")
-}
+    implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
+    implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")
+    implementation("dev.arbjerg:lavaplayer:$lavaplayerVersion")
+    implementation("dev.lavalink.youtube:common:$lavalinkYoutubeVersion")
+    }
 
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
