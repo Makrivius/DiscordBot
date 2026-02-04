@@ -10,6 +10,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     application
     id("com.gradleup.shadow") version "9.3.0"
+    id("com.github.ben-manes.versions") version "0.53.0"
 }
 
 repositories {
@@ -21,7 +22,8 @@ dependencies {
     implementation("net.dv8tion:JDA:$jdaVersion")
     implementation("ch.qos.logback:logback-classic:1.5.6")
     implementation("io.github.cdimascio:java-dotenv:5.2.2")
-
+    implementation("dev.arbjerg:lavaplayer:2.2.6")
+    implementation("dev.lavalink.youtube:common:1.17.0")
 }
 
 tasks.withType<JavaCompile> {
