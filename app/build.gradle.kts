@@ -34,6 +34,12 @@ dependencies {
     implementation("dev.arbjerg:lavaplayer:$lavaplayerVersion")
     implementation("dev.lavalink.youtube:common:$lavalinkYoutubeVersion")
     implementation("org.reflections:reflections:0.10.2")
+
+    implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.0"))
+
+    implementation("com.fasterxml.jackson.core:jackson-core")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
+    implementation("com.fasterxml.jackson.core:jackson-annotations")
     }
 
 tasks.withType<JavaCompile> {
