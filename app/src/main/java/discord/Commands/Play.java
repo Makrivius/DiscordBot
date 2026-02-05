@@ -14,15 +14,17 @@ public class Play extends BaseCommand {
     @Override
     public void execute(MessageReceivedEvent event) {
         String raw = event.getMessage().getContentRaw();
-        String[] parts = raw.split(" ", 3);
+        
+        // Skip command prefix and name
+        String query = raw.substring(getName().length() + 2).trim();
 
-        if (parts.length < 3) {
-            event.getChannel().sendMessage("Usage: !play <url or search query> 'shuffle'(default off)").queue();
-            return;
+        // Find if last word is shuffle flag
+        boolean shuffle = false;
+        if (query.endsWith("shuffle")) {
+            query = query.substring(0, query.length() - 7).trim(); // Remove "shuffle" from the end
+            shuffle = true;
         }
 
-        String query = parts[1];
-        boolean shuffle = parts[2].equalsIgnoreCase("shuffle");
         var guild = event.getGuild();
         var member = event.getMember();
 
