@@ -17,9 +17,19 @@ public class TrackScheduler extends AudioEventAdapter {
     private final List<AudioTrack> history = new ArrayList<>();
 
     private AudioTrack currentTrack;
+    private TrackStartListener trackStartListener;
 
     public TrackScheduler(AudioPlayer player) {
         this.player = player;
+    }
+
+    public void setTrackStartListener(TrackStartListener listener) {
+        this.trackStartListener = listener;
+    }
+
+    @FunctionalInterface
+    public interface TrackStartListener {
+        void onTrackStarted(AudioTrack track);
     }
 
     public void clearAll() {
@@ -55,6 +65,18 @@ public class TrackScheduler extends AudioEventAdapter {
         clearAll();
     }
 
+    public void previous() {
+        if (history.isEmpty()) {
+            return;
+        }
+        if (currentTrack != null) {
+            queue.add(0, currentTrack);
+        }
+        AudioTrack previous = history.remove(history.size() - 1);
+        currentTrack = previous;
+        player.startTrack(previous, false);
+    }
+
     public void skip() {
         if (currentTrack != null) {
             history.add(currentTrack);
@@ -83,6 +105,13 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public List<AudioTrack> getHistory() {
         return history;
+    }
+
+    @Override
+    public void onTrackStart(AudioPlayer player, AudioTrack track) {
+        if (trackStartListener != null) {
+            trackStartListener.onTrackStarted(track);
+        }
     }
 
     @Override

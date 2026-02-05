@@ -13,6 +13,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 
@@ -62,6 +63,11 @@ public class PlayerManager {
     public void loadAndPlay(MessageChannel channel, String trackUrl, boolean shuffle) {
         var guild = ((GuildChannel) channel).getGuild();
         var musicManager = getGuildMusicManager(guild);
+        
+        // Set the current channel for now playing messages
+        if (channel instanceof TextChannel textChannel) {
+            musicManager.setCurrentChannel(textChannel);
+        }
 
         playerManager.loadItemOrdered(musicManager, trackUrl, new AudioLoadResultHandler() {
 
