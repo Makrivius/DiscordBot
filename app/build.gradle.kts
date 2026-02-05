@@ -33,6 +33,7 @@ dependencies {
     implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")
     implementation("dev.arbjerg:lavaplayer:$lavaplayerVersion")
     implementation("dev.lavalink.youtube:common:$lavalinkYoutubeVersion")
+    implementation("org.reflections:reflections:0.10.2")
     }
 
 tasks.withType<JavaCompile> {
