@@ -14,14 +14,15 @@ public class Play extends BaseCommand {
     @Override
     public void execute(MessageReceivedEvent event) {
         String raw = event.getMessage().getContentRaw();
-        String[] parts = raw.split(" ", 2);
+        String[] parts = raw.split(" ", 3);
 
-        if (parts.length < 2) {
-            event.getChannel().sendMessage("Usage: !play <url or search query>").queue();
+        if (parts.length < 3) {
+            event.getChannel().sendMessage("Usage: !play <url or search query> 'shuffle'(default off)").queue();
             return;
         }
 
         String query = parts[1];
+        boolean shuffle = parts[2].equalsIgnoreCase("shuffle");
         var guild = event.getGuild();
         var member = event.getMember();
 
@@ -49,6 +50,6 @@ public class Play extends BaseCommand {
             query = "ytsearch:" + query;
         }
 
-        PlayerManager.get().loadAndPlay(event.getChannel(), query);
+        PlayerManager.get().loadAndPlay(event.getChannel(), query, shuffle);
     }
 }

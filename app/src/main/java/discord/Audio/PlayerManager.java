@@ -59,7 +59,7 @@ public class PlayerManager {
         });
     }
 
-    public void loadAndPlay(MessageChannel channel, String trackUrl) {
+    public void loadAndPlay(MessageChannel channel, String trackUrl, boolean shuffle) {
         var guild = ((GuildChannel) channel).getGuild();
         var musicManager = getGuildMusicManager(guild);
 
@@ -77,15 +77,12 @@ public class PlayerManager {
                     // Only first result for searches
                     AudioTrack first = playlist.getTracks().get(0);
                     musicManager.scheduler.queue(first);
-                    channel.sendMessage("Added top result: " + first.getInfo().title).queue();
+                    channel.sendMessage("Added result: " + first.getInfo().title).queue();
                     return;
                 }
 
                 // Real playlist URL → queue all tracks
-                for (AudioTrack track : playlist.getTracks()) {
-                    musicManager.scheduler.queue(track);
-                }
-
+                musicManager.scheduler.addPlaylist(playlist.getTracks(), shuffle);
                 channel.sendMessage("Loaded playlist: " + playlist.getName() +
                         " (" + playlist.getTracks().size() + " tracks)").queue();
             }

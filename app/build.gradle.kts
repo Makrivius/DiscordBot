@@ -28,6 +28,8 @@ repositories {
 }
 
 dependencies {
+    implementation("club.minnced:jdave-api:0.1.5")
+
     implementation("net.dv8tion:JDA:$jdaVersion")
     implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
     implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")
@@ -53,7 +55,7 @@ tasks.withType<JavaCompile> {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
 }
 

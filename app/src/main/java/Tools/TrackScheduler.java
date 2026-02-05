@@ -1,13 +1,13 @@
 package tools;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class TrackScheduler extends AudioEventAdapter {
 
@@ -36,6 +36,23 @@ public class TrackScheduler extends AudioEventAdapter {
         } else {
             queue.add(track);
         }
+    }
+
+    public void addPlaylist(List<AudioTrack> tracks, boolean shuffle) {
+        if (shuffle) {
+            Collections.shuffle(tracks);
+        }
+        for (AudioTrack track : tracks) {
+            queue(track);
+        }
+    }
+
+    public void togglePlayback() {
+        player.setPaused(!player.isPaused());
+    }
+
+    public void stop() {
+        clearAll();
     }
 
     public void skip() {

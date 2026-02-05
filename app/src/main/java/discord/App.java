@@ -5,11 +5,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import discord.commands.BaseCommand;
 import discord.handlers.CommandListener;
 import discord.loader.CommandLoader;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 public class App {
@@ -19,6 +21,7 @@ public class App {
         // 1. Load all commands from your package
         Map<String, BaseCommand> commands = CommandLoader.load("discord.commands");
 
+
         // 2. Build JDA and register your listener
         JDA api = JDABuilder
                 .createDefault(Config.TOKEN,
@@ -26,6 +29,9 @@ public class App {
                         GatewayIntent.MESSAGE_CONTENT,
                         GatewayIntent.GUILD_VOICE_STATES)
                 .addEventListeners(new CommandListener(commands))
+                .setAudioModuleConfig(
+                    new AudioModuleConfig()
+                    .withDaveSessionFactory(new JDaveSessionFactory()))
                 .build();
 
         // 3. Wait for JDA to be ready (optional but recommended)
