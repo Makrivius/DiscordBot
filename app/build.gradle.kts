@@ -30,6 +30,10 @@ repositories {
 dependencies {
     implementation("club.minnced:jdave-api:0.1.5")
 
+    implementation("club.minnced:jdave-native-linux-x86-64:0.1.5")
+    implementation("club.minnced:jdave-native-linux-aarch64:0.1.5")
+    implementation("club.minnced:jdave-native-win-x86-64:0.1.5")
+
     implementation("net.dv8tion:JDA:$jdaVersion")
     implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
     implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")

@@ -83,8 +83,8 @@ public class PlayerManager {
 
                 // Real playlist URL → queue all tracks
                 musicManager.scheduler.addPlaylist(playlist.getTracks(), shuffle);
-                channel.sendMessage("Loaded playlist: " + playlist.getName() +
-                        " (" + playlist.getTracks().size() + " tracks)").queue();
+                channel.sendMessage("Loaded playlist: " + trackUrl +
+                        " (" + playlist.getTracks().size() + " tracks) " + (shuffle ? "(shuffled)" : "")).queue();
             }
 
             @Override
