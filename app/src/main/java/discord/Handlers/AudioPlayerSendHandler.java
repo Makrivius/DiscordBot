@@ -1,4 +1,4 @@
-package discord.Handlers;
+package discord.handlers;
 
 import java.nio.ByteBuffer;
 

@@ -1,4 +1,4 @@
-package Tools;
+package tools;
 
 import java.io.File;
 import java.net.URISyntaxException;
