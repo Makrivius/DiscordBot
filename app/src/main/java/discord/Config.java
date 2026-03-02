@@ -14,16 +14,15 @@ public class Config {
 
     private static final String JAR_DIRECTORY = PathHelper.getJarDirectory();
     private static final File ENV_FILE = new File(JAR_DIRECTORY, ".env");
-    
-    
+
     private static final Dotenv dotenv = Dotenv.configure()
-    .directory(JAR_DIRECTORY)
-    .ignoreIfMissing()
-    .load();
-    
+            .directory(JAR_DIRECTORY)
+            .ignoreIfMissing()
+            .load();
+
     public static final String TOKEN = dotenv.get("DISCORD_TOKEN");
     public static final String PREFIX = dotenv.get("PREFIX", "!");
-    public static final String YT_REFRESH_TOKEN = dotenv.get("YT_REFRESH_TOKEN");
+    public static final String DB_PATH = dotenv.get("DB_PATH", "bot.db");
 
     static {
         log.info("JAR directory: {}", JAR_DIRECTORY);

@@ -46,6 +46,9 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core")
     implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation("com.fasterxml.jackson.core:jackson-annotations")
+
+    //DB
+    implementation("org.xerial:sqlite-jdbc:3.51.2.0")
     }
 
 tasks.withType<JavaCompile> {
