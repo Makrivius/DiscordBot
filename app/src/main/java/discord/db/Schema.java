@@ -10,6 +10,7 @@ public class Schema {
             st.execute("""
                 CREATE TABLE IF NOT EXISTS command_config (
                     name TEXT PRIMARY KEY,
+                    guild_id TEXT NOT NULL,
                     url TEXT NOT NULL,
                     date TEXT NOT NULL
                 );

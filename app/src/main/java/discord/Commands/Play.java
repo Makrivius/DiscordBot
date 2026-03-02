@@ -1,5 +1,7 @@
 package discord.commands;
 
+import java.util.List;
+
 import discord.audio.PlayerManager;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -13,18 +15,6 @@ public class Play extends BaseCommand {
 
     @Override
     public void execute(MessageReceivedEvent event) {
-        String raw = event.getMessage().getContentRaw();
-        
-        // Skip command prefix and name
-        String query = raw.substring(getName().length() + 2).trim();
-
-        // Find if last word is shuffle flag
-        boolean shuffle = false;
-        if (query.endsWith("shuffle")) {
-            query = query.substring(0, query.length() - 7).trim(); // Remove "shuffle" from the end
-            shuffle = true;
-        }
-
         var guild = event.getGuild();
         var member = event.getMember();
 
@@ -32,6 +22,24 @@ public class Play extends BaseCommand {
             event.getChannel().sendMessage("This command can only be used in a server.").queue();
             return;
         }
+
+        // Parse command and args
+        var parsed = tools.CommandParser.parse(event.getMessage().getContentRaw());
+        if (parsed == null) {
+            return;
+        }
+        // Check for "shuffle" flag
+        List<String> args = parsed.args;
+        boolean shuffle = false;
+        if (!args.isEmpty()) {
+            String last = args.get(args.size() - 1).toLowerCase();
+            if (last.equals("shuffle") || last.equals("true")) {
+                shuffle = true;
+                args.remove(args.size() - 1);
+            }
+        }
+        // Join remaining args into a search query or URL
+        String query = String.join(" ", args);
 
         GuildVoiceState vs = member.getVoiceState();
         if (vs == null || !vs.inAudioChannel()) {
