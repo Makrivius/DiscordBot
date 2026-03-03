@@ -7,4 +7,4 @@ build
 # Ignore environment variable file
 .env
 # Ignore database file
-.db
+bot.db
