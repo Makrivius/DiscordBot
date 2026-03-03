@@ -8,7 +8,18 @@ public class Leave extends BaseCommand {
     }
 
     @Override
-    public void execute(net.dv8tion.jda.api.events.message.MessageReceivedEvent event) {
+    public String getDescription() {
+        return "Leaves the voice channel.";
+    }
+
+    @Override
+    public String getUsage() {
+        return "!leave";
+    }
+
+    @Override
+    public void execute(net.dv8tion.jda.api.events.message.MessageReceivedEvent event,
+            discord.util.CommandParser.ParsedCommand cmd) {
         var guild = event.getGuild();
         var audioManager = guild.getAudioManager();
 

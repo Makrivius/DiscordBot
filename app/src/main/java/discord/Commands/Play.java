@@ -1,8 +1,7 @@
 package discord.commands;
 
-import java.util.List;
-
 import discord.audio.PlayerManager;
+import discord.util.CommandParser.ParsedCommand;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
@@ -14,7 +13,23 @@ public class Play extends BaseCommand {
     }
 
     @Override
-    public void execute(MessageReceivedEvent event) {
+    public String getDescription() {
+        return "Plays a song from YouTube or a direct URL. Use --shuffle to shuffle playlist results.";
+    }
+
+    @Override
+    public String getUsage() {
+        return "!play [--shuffle] <URL or search query or playlist URL>";
+    }
+
+    @Override
+    public void execute(MessageReceivedEvent event, ParsedCommand cmd) {
+        // Check for "shuffle" flag
+        boolean shuffle = cmd.args.remove("--shuffle") || cmd.args.remove("-s");
+
+        // Join remaining args into a search query or URL
+        String query = String.join(" ", cmd.args);
+
         var guild = event.getGuild();
         var member = event.getMember();
 
@@ -23,23 +38,10 @@ public class Play extends BaseCommand {
             return;
         }
 
-        // Parse command and args
-        var parsed = tools.CommandParser.parse(event.getMessage().getContentRaw());
-        if (parsed == null) {
+        if (query.isBlank()) {
+            event.getChannel().sendMessage("❌ Provide a URL or search query.").queue();
             return;
         }
-        // Check for "shuffle" flag
-        List<String> args = parsed.args;
-        boolean shuffle = false;
-        if (!args.isEmpty()) {
-            String last = args.get(args.size() - 1).toLowerCase();
-            if (last.equals("shuffle") || last.equals("true")) {
-                shuffle = true;
-                args.remove(args.size() - 1);
-            }
-        }
-        // Join remaining args into a search query or URL
-        String query = String.join(" ", args);
 
         GuildVoiceState vs = member.getVoiceState();
         if (vs == null || !vs.inAudioChannel()) {
@@ -62,4 +64,5 @@ public class Play extends BaseCommand {
 
         PlayerManager.get().loadAndPlay(event.getChannel(), query, shuffle);
     }
+
 }

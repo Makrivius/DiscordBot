@@ -6,9 +6,9 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import discord.handlers.AudioPlayerSendHandler;
 import discord.ui.NowPlaying;
+import discord.util.TrackScheduler;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import tools.TrackScheduler;
 
 public class GuildMusicManager {
 

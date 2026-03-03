@@ -5,8 +5,8 @@ import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import discord.util.PathHelper;
 import io.github.cdimascio.dotenv.Dotenv;
-import tools.PathHelper;
 
 public class Config {
 

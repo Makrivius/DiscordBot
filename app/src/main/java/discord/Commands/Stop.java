@@ -1,5 +1,7 @@
 package discord.commands;
 
+import discord.util.CommandParser.ParsedCommand;
+
 public class Stop extends BaseCommand {
 
     @Override
@@ -8,7 +10,17 @@ public class Stop extends BaseCommand {
     }
 
     @Override
-    public void execute(net.dv8tion.jda.api.events.message.MessageReceivedEvent event) {
+    public String getDescription() {
+        return "Stops playback and clears the queue.";
+    }
+
+    @Override
+    public String getUsage() {
+        return "!stop";
+    }
+
+    @Override
+    public void execute(net.dv8tion.jda.api.events.message.MessageReceivedEvent event, ParsedCommand cmd) {
         var guild = event.getGuild();
         var musicManager = discord.audio.PlayerManager.get().getGuildMusicManager(guild);
 

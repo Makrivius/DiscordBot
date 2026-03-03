@@ -1,4 +1,4 @@
-package tools;
+package discord.util;
 
 import java.util.ArrayList;
 import java.util.Collections;

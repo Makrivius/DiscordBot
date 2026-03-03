@@ -1,6 +1,7 @@
 package discord.commands;
 
 import discord.audio.PlayerManager;
+import discord.util.CommandParser.ParsedCommand;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class Skip extends BaseCommand {
@@ -11,7 +12,17 @@ public class Skip extends BaseCommand {
     }
 
     @Override
-    public void execute(MessageReceivedEvent event) {
+    public String getDescription() {
+        return "Skips the current song.";
+    }
+
+    @Override
+    public String getUsage() {
+        return "!skip";
+    }
+
+    @Override
+    public void execute(MessageReceivedEvent event, ParsedCommand cmd) {
         var guild = event.getGuild();
         var musicManager = PlayerManager.get().getGuildMusicManager(guild);
 
