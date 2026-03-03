@@ -26,7 +26,7 @@ public class CommandParser {
         String argsRaw;
 
         if (spaceIndex == -1) {
-            command = raw;
+            command = raw.toLowerCase();
             argsRaw = "";
         } else {
             command = raw.substring(0, spaceIndex).toLowerCase();
