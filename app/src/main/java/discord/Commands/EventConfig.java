@@ -2,7 +2,7 @@ package discord.commands;
 
 import discord.db.DatabaseManager;
 import discord.util.CommandParser.ParsedCommand;
-import discord.util.ConfirmationHandler;
+import discord.handlers.ConfirmationHandler;
 import discord.util.DateUtil;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 

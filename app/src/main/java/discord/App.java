@@ -10,7 +10,7 @@ import discord.commands.CommandRegistry;
 import discord.db.Schema;
 import discord.loader.CommandLoader;
 import discord.scheduler.EventScheduler;
-import discord.util.ConfirmationHandler;
+import discord.handlers.ConfirmationHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.audio.AudioModuleConfig;

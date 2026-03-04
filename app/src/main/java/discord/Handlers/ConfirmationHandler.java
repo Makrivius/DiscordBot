@@ -1,4 +1,4 @@
-package discord.util;
+package discord.handlers;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
@@ -10,13 +10,19 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import javax.annotation.Nonnull;
+
+import discord.util.PrivilegeManager;
+
 import java.awt.Color;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ConfirmationHandler extends ListenerAdapter {
 
     private static final ConcurrentHashMap<String, PendingAction> pending = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
     /**
      * Permission check + confirmation flow in one call.
@@ -67,19 +73,20 @@ public class ConfirmationHandler extends ListenerAdapter {
                         Button.danger("confirm_decline:" + userId, "❌ Decline")))
                 .queue(sent -> {
                     pending.put(userId, new PendingAction(sent, onAccept));
-                    sent.editMessageComponents()
-                            .delay(30, TimeUnit.SECONDS)
-                            .flatMap(m -> {
-                                pending.remove(userId);
-                                return m.editMessageEmbeds(
-                                        new EmbedBuilder()
-                                                .setTitle("⏱️ Request expired")
-                                                .setColor(Color.GRAY)
-                                                .build())
-                                        .setComponents();
-                            })
-                            .queue(null, ignored -> {
-                            });
+
+                    scheduler.schedule(() -> {
+                        PendingAction expired = pending.remove(userId);
+                        if (expired == null)
+                            return; // already handled by button click
+                        sent.editMessageEmbeds(
+                                new EmbedBuilder()
+                                        .setTitle("⏱️ Request expired")
+                                        .setColor(Color.GRAY)
+                                        .build())
+                                .setComponents()
+                                .queue(null, ignored -> {
+                                });
+                    }, 30, TimeUnit.SECONDS);
                 });
     }
 

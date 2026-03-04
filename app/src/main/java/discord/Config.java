@@ -21,7 +21,7 @@ public class Config {
             .load();
 
     public static final String TOKEN = dotenv.get("DISCORD_TOKEN");
-    public static final String PREFIX = dotenv.get("PREFIX", "!").trim();
+    public static final String PREFIX = dotenv.get("PREFIX", "!");
     public static final String DB_PATH = dotenv.get("DB_PATH", "bot.db");
 
     static {
