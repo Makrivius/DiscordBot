@@ -10,7 +10,7 @@ val jdaVersion = "6.3.0"
 val logbackClassicVersion = "1.5.6"
 val javaDotenvVersion = "5.2.2"
 val lavaplayerVersion = "2.2.6"
-val lavalinkYoutubeVersion = "1.17.0"
+val lavalinkYoutubeVersion = "1.18.0"
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
