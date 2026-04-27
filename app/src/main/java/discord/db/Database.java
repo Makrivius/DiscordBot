@@ -5,6 +5,7 @@ import java.sql.*;
 
 public class Database {
     private static final String URL = "jdbc:sqlite:" + Config.DB_PATH;
+
     static {
         try (Connection conn = DriverManager.getConnection(URL)) {
             if (conn != null) {
@@ -13,6 +14,10 @@ public class Database {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
+        // Run any pending migrations before the bot starts.
+        // Safe to call every startup — already-applied files are skipped.
+        Migrations.run();
     }
 
     public static Connection get() throws SQLException {

@@ -8,3 +8,7 @@ build
 .env
 # Ignore database file
 bot.db
+app/bin/main/V001__initial_schema.sql
+app/bin/main/V002__image_pools.sql
+app/src/main/resources/V001__initial_schema.sql
+app/src/main/resources/V002__image_pools.sql

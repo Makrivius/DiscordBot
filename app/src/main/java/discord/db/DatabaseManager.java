@@ -116,6 +116,42 @@ public class DatabaseManager {
     }
 
     /**
+     * SELECT rows with an ORDER BY clause.
+     *
+     * Example:
+     * selectOrdered("pool_image", new String[]{"pool_name"}, new Object[]{"cats"},
+     * "added_order", true);
+     */
+
+    public static List<Map<String, Object>> selectOrdered(String table, String[] whereCols, Object[] whereValues,
+            String orderByCol, boolean asc) {
+        boolean hasWhere = whereCols != null && whereCols.length > 0;
+        String sql = "SELECT * FROM " + table
+                + (hasWhere ? " WHERE " + buildClause(whereCols, " AND ") : "")
+                + " ORDER BY " + orderByCol + (asc ? " ASC" : " DESC");
+        List<Map<String, Object>> results = new ArrayList<>();
+        try (Connection conn = Database.get();
+                PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (hasWhere)
+                for (int i = 0; i < whereValues.length; i++)
+                    ps.setObject(i + 1, whereValues[i]);
+            try (ResultSet rs = ps.executeQuery()) {
+                ResultSetMetaData meta = rs.getMetaData();
+                int colCount = meta.getColumnCount();
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    for (int i = 1; i <= colCount; i++)
+                        row.put(meta.getColumnName(i), rs.getObject(i));
+                    results.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("selectOrdered failed on table: " + table, e);
+        }
+        return results;
+    }
+
+    /**
      * SELECT with a raw WHERE clause for complex queries.
      *
      * Example:

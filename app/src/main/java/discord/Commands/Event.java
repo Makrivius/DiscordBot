@@ -1,10 +1,11 @@
 package discord.commands;
 
 import discord.db.DatabaseManager;
+import discord.util.CommandParser.ParsedCommand;
 import discord.util.DateUtil;
+import discord.util.PoolImagePicker;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import discord.util.CommandParser.ParsedCommand;
 
 import javax.annotation.Nonnull;
 import java.awt.Color;
@@ -40,12 +41,18 @@ public class Event extends BaseCommand {
         sendEventEmbed(event.getChannel(), rows.get(0));
     }
 
-    /** Reusable — called both from command and from EventScheduler. */
-    public static void sendEventEmbed(net.dv8tion.jda.api.entities.channel.middleman.MessageChannel channel,
-                                      Map<String, Object> entry) {
+    /**
+     * Reusable — called both from this command and from EventScheduler.
+     *
+     * Picks a random image from the event's pool using the pool's bias, then
+     * sends the embed followed by the picked image URL.
+     */
+    public static void sendEventEmbed(
+            net.dv8tion.jda.api.entities.channel.middleman.MessageChannel channel,
+            Map<String, Object> entry) {
+
         LocalDate dateFrom = DateUtil.parse((String) entry.get("date_from"));
         LocalDate dateTo   = DateUtil.parse((String) entry.get("date_to"));
-
         if (dateFrom == null || dateTo == null) {
             channel.sendMessage("❌ Event has invalid dates stored.").queue();
             return;
@@ -56,21 +63,30 @@ public class Event extends BaseCommand {
 
         LocalDate now = LocalDate.now();
         Color color;
-        if (now.isBefore(dateFrom))   color = Color.YELLOW; // not started
-        else if (now.isAfter(dateTo)) color = Color.GRAY;   // ended
-        else                          color = Color.GREEN;   // ongoing
+        if      (now.isBefore(dateFrom)) color = Color.YELLOW;
+        else if (now.isAfter(dateTo))    color = Color.GRAY;
+        else                             color = Color.GREEN;
+
+        // Pick an image from the pool
+        String poolName = (String) entry.get("pool_name");
+        String imageUrl = PoolImagePicker.pick(poolName);
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("📅 " + entry.get("name"))
                 .addField("Started", entry.get("date_from") + " — " + elapsed,   false)
                 .addField("Ends",    entry.get("date_to")   + " — " + countdown, false)
+                .addField("Pool",    poolName, true)
                 .setColor(color);
 
-        String imageUrl = (String) entry.get("image_url");
-
-        // Send embed first, then image as a separate message
-        channel.sendMessageEmbeds(embed.build()).queue(msg ->
-                channel.sendMessage(imageUrl).queue()
-        );
+        if (imageUrl != null) {
+            // Send embed first, then image as a separate message (matching original behaviour)
+            channel.sendMessageEmbeds(embed.build()).queue(msg ->
+                    channel.sendMessage(imageUrl).queue()
+            );
+        } else {
+            // Pool is empty — send embed with a warning, no crash
+            embed.setFooter("⚠️ Pool \"" + poolName + "\" is empty — no image today.");
+            channel.sendMessageEmbeds(embed.build()).queue();
+        }
     }
 }
