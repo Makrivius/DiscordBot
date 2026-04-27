@@ -9,6 +9,7 @@ import discord.util.PathHelper;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Config {
+    public static void ensureLoaded() {}
     private static final String JAR_DIRECTORY = PathHelper.getJarDirectory();
     private static final File ENV_FILE = new File(JAR_DIRECTORY, ".env");
 
@@ -17,13 +18,15 @@ public class Config {
             .ignoreIfMissing()
             .load();
 
-    public static final String LOG_LEVEL = dotenv.get("LOG_LEVEL", "INFO");
     public static final String TOKEN = dotenv.get("DISCORD_TOKEN");
     public static final String PREFIX = dotenv.get("PREFIX", "!");
+    static {
+        String LOG_LEVEL = dotenv.get("LOG_LEVEL", "INFO");
+        System.setProperty("LOG_LEVEL", LOG_LEVEL);
+    }
     public static final String DB_PATH = dotenv.get("DB_PATH", "bot.db");
 
     private static final Logger log = LoggerFactory.getLogger(Config.class);
-
     static {
         log.info("JAR directory: {}", JAR_DIRECTORY);
 
