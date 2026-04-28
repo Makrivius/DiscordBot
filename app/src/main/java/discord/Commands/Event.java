@@ -17,7 +17,7 @@ public class Event extends BaseCommand {
 
     @Override @Nonnull public String getName()        { return "event"; }
     @Override @Nonnull public String getDescription() { return "Shows current event info and time status."; }
-    @Override @Nonnull public String getUsage()       { return "`!event <n>`"; }
+    @Override @Nonnull public String getUsage()       { return "`!event <name>`"; }
 
     @Override
     public void execute(MessageReceivedEvent event, ParsedCommand cmd) {
@@ -28,9 +28,7 @@ public class Event extends BaseCommand {
 
         String name = cmd.args.get(0);
         List<Map<String, Object>> rows = DatabaseManager.select(
-                "command_config",
-                new String[]{"name"},
-                new Object[]{name}
+                "command_config", new String[]{"name"}, new Object[]{name}
         );
 
         if (rows.isEmpty()) {
@@ -41,12 +39,7 @@ public class Event extends BaseCommand {
         sendEventEmbed(event.getChannel(), rows.get(0));
     }
 
-    /**
-     * Reusable — called both from this command and from EventScheduler.
-     *
-     * Picks a random image from the event's pool using the pool's bias, then
-     * sends the embed followed by the picked image URL.
-     */
+    /** Reusable — called both from this command and from EventScheduler. */
     public static void sendEventEmbed(
             net.dv8tion.jda.api.entities.channel.middleman.MessageChannel channel,
             Map<String, Object> entry) {
@@ -67,26 +60,30 @@ public class Event extends BaseCommand {
         else if (now.isAfter(dateTo))    color = Color.GRAY;
         else                             color = Color.GREEN;
 
-        // Pick an image from the pool
         String poolName = (String) entry.get("pool_name");
-        String imageUrl = PoolImagePicker.pick(poolName);
+        double bias     = toDouble(entry.get("bias"), 1.0);
+        String imageUrl = PoolImagePicker.pick(poolName, bias);
 
         EmbedBuilder embed = new EmbedBuilder()
                 .setTitle("📅 " + entry.get("name"))
                 .addField("Started", entry.get("date_from") + " — " + elapsed,   false)
                 .addField("Ends",    entry.get("date_to")   + " — " + countdown, false)
-                .addField("Pool",    poolName, true)
+                .addField("Pool",    poolName,                                    true)
+                .addField("Bias",    String.format("%.1f", bias),                 true)
                 .setColor(color);
 
         if (imageUrl != null) {
-            // Send embed first, then image as a separate message (matching original behaviour)
             channel.sendMessageEmbeds(embed.build()).queue(msg ->
                     channel.sendMessage(imageUrl).queue()
             );
         } else {
-            // Pool is empty — send embed with a warning, no crash
             embed.setFooter("⚠️ Pool \"" + poolName + "\" is empty — no image today.");
             channel.sendMessageEmbeds(embed.build()).queue();
         }
+    }
+
+    private static double toDouble(Object v, double fallback) {
+        if (v instanceof Number) return ((Number) v).doubleValue();
+        try { return Double.parseDouble(v.toString()); } catch (Exception e) { return fallback; }
     }
 }

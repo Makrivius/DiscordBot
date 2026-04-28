@@ -1,126 +1,76 @@
 package discord.db;
 
+import discord.Config;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Runs SQL migration files in order, exactly once each.
+ * Runs schema.sql on startup when RUN_MIGRATIONS=true is set in .env
  *
- * Files live in resources/migrations/ and must be named:
- *   V001__description.sql
- *   V002__description.sql
- *   ...
+ * schema.sql uses IF NOT EXISTS throughout, so it is safe to re-run
+ * on every startup — it will never drop or overwrite existing data.
  *
- * Applied migrations are recorded in the `schema_version` table so they
- * never run twice, even across restarts.
- *
- * Call Migrations.run() once, early in your startup — before any other
- * DB access.
+ * To apply a schema change:
+ *   1. Add the new CREATE/ALTER statement to schema.sql
+ *   2. Set RUN_MIGRATIONS=true in .env
+ *   3. Restart the bot — migrations run, then the bot starts normally
+ *   4. Remove RUN_MIGRATIONS=true (or set to false) so it doesn't re-run
  */
 public class Migrations {
 
-    // All migration filenames in the exact order they must run.
-    // Add new entries at the bottom — never reorder or rename existing ones.
-    private static final String[] FILES = {
-            "V001__initial_schema.sql",
-            "V002__add_image_pools.sql",
-    };
-
-    private static final String MIGRATIONS_DIR = "migrations/";
+    private static final String SCHEMA_FILE = "schema.sql";
 
     public static void run() {
+        String flag = Config.RUN_MIGRATIONS;
+        if (!"true".equalsIgnoreCase(flag)) {
+            System.out.println("[Migration] Skipped (RUN_MIGRATIONS != true)");
+            return;
+        }
+
+        System.out.println("[Migration] RUN_MIGRATIONS=true — applying schema.sql...");
         try (Connection conn = Database.get()) {
-            ensureVersionTable(conn);
-            List<String> applied = getApplied(conn);
-
-            for (String file : FILES) {
-                if (applied.contains(file)) {
-                    System.out.println("[Migration] Already applied: " + file);
-                    continue;
-                }
-
-                System.out.println("[Migration] Applying: " + file);
-                String sql = load(file);
-                execute(conn, sql);
-                markApplied(conn, file);
-                System.out.println("[Migration] Done: " + file);
-            }
-
+            String sql = load(SCHEMA_FILE);
+            execute(conn, sql);
+            System.out.println("[Migration] Schema applied successfully.");
         } catch (Exception e) {
-            // Hard stop — never start the bot with a broken schema
             throw new RuntimeException("Migration failed. Bot will not start.", e);
         }
     }
 
-    // -------------------------------------------------------------------------
-
-    private static void ensureVersionTable(Connection conn) throws SQLException {
-        try (Statement st = conn.createStatement()) {
-            st.execute("""
-                CREATE TABLE IF NOT EXISTS schema_version (
-                    filename   TEXT NOT NULL PRIMARY KEY,
-                    applied_at TEXT NOT NULL DEFAULT (datetime('now'))
-                )
-            """);
-        }
-    }
-
-    private static List<String> getApplied(Connection conn) throws SQLException {
-        List<String> applied = new ArrayList<>();
-        try (Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery("SELECT filename FROM schema_version")) {
-            while (rs.next()) applied.add(rs.getString("filename"));
-        }
-        return applied;
-    }
-
-    private static void markApplied(Connection conn, String filename) throws SQLException {
-        try (var ps = conn.prepareStatement(
-                "INSERT INTO schema_version (filename) VALUES (?)")) {
-            ps.setString(1, filename);
-            ps.executeUpdate();
-        }
-    }
-
     private static String load(String filename) {
-        String path = MIGRATIONS_DIR + filename;
-        InputStream is = Migrations.class.getClassLoader().getResourceAsStream(path);
+        InputStream is = Migrations.class.getClassLoader().getResourceAsStream(filename);
         if (is == null) {
-            throw new RuntimeException("Migration file not found on classpath: " + path);
+            throw new RuntimeException("Schema file not found on classpath: " + filename);
         }
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(is, StandardCharsets.UTF_8))) {
             return reader.lines().collect(Collectors.joining("\n"));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to read migration file: " + path, e);
+            throw new RuntimeException("Failed to read schema file: " + filename, e);
         }
     }
 
     private static void execute(Connection conn, String sql) throws SQLException {
-        // Strip comment lines first, then split on semicolons
+        // Strip comment lines, then split on semicolons
         String stripped = Arrays.stream(sql.split("\n"))
                 .filter(line -> !line.strip().startsWith("--"))
                 .collect(Collectors.joining("\n"));
 
-        String[] statements = stripped.split(";");
         try (Statement st = conn.createStatement()) {
-            for (String stmt : statements) {
+            for (String stmt : stripped.split(";")) {
                 String trimmed = stmt.strip();
                 if (trimmed.isEmpty()) continue;
                 try {
                     st.execute(trimmed);
                 } catch (SQLException e) {
-                    // Ignore "already exists" errors so re-runs are safe
                     String msg = e.getMessage().toLowerCase();
                     if (msg.contains("already exists") || msg.contains("duplicate column")) {
                         System.out.println("[Migration] Skipping (already exists): "

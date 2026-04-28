@@ -20,6 +20,7 @@ public class Config {
 
     public static final String TOKEN = dotenv.get("DISCORD_TOKEN");
     public static final String PREFIX = dotenv.get("PREFIX", "!");
+    public static final String RUN_MIGRATIONS = dotenv.get("RUN_MIGRATIONS", "false");
     static {
         String LOG_LEVEL = dotenv.get("LOG_LEVEL", "INFO");
         System.setProperty("LOG_LEVEL", LOG_LEVEL);
