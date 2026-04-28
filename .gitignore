@@ -10,5 +10,7 @@ build
 bot.db
 app/bin/main/migrations/V001__initial_schema.sql
 app/bin/main/migrations/V002__add_image_pools.sql
+app/bin/main/migrations/V003__fix_image_pool.sql
 app/src/main/resources/migrations/V001__initial_schema.sql
 app/src/main/resources/migrations/V002__add_image_pools.sql
+app/src/main/resources/migrations/V003__fix_image_pool.sql

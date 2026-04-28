@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -106,13 +107,27 @@ public class Migrations {
     }
 
     private static void execute(Connection conn, String sql) throws SQLException {
-        // Split on semicolons so multi-statement files work correctly
-        String[] statements = sql.split(";");
+        // Strip comment lines first, then split on semicolons
+        String stripped = Arrays.stream(sql.split("\n"))
+                .filter(line -> !line.strip().startsWith("--"))
+                .collect(Collectors.joining("\n"));
+
+        String[] statements = stripped.split(";");
         try (Statement st = conn.createStatement()) {
             for (String stmt : statements) {
                 String trimmed = stmt.strip();
-                if (!trimmed.isEmpty() && !trimmed.startsWith("--")) {
+                if (trimmed.isEmpty()) continue;
+                try {
                     st.execute(trimmed);
+                } catch (SQLException e) {
+                    // Ignore "already exists" errors so re-runs are safe
+                    String msg = e.getMessage().toLowerCase();
+                    if (msg.contains("already exists") || msg.contains("duplicate column")) {
+                        System.out.println("[Migration] Skipping (already exists): "
+                                + trimmed.substring(0, Math.min(60, trimmed.length())));
+                    } else {
+                        throw e;
+                    }
                 }
             }
         }
