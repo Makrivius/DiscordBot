@@ -9,7 +9,12 @@ import discord.util.PathHelper;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Config {
+    /** 
+     * Ensures that the configuration is loaded.
+     * <p><strong>Empty method </strong></p>
+     */
     public static void ensureLoaded() {}
+    
     private static final String JAR_DIRECTORY = PathHelper.getJarDirectory();
     private static final File ENV_FILE = new File(JAR_DIRECTORY, ".env");
 
