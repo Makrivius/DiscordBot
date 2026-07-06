@@ -1,7 +1,5 @@
 package discord.commands.music;
 
-import java.beans.EventHandler;
-
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
@@ -51,7 +49,7 @@ public class PlayCommand implements Command {
                         + playlist.getTracks().size() + " tracks" + (shuffle ? ", shuffled" : "") + ")").queue();
 
             }
-        }, error -> event.getChannel().sendMessage(error).queue());
+        }, error -> event.getChannel().sendMessage(error.isEmpty() ? "Unknown error" : error).queue());
     }
 
     private boolean ensureConnected(MessageReceivedEvent event) {

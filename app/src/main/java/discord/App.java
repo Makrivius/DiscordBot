@@ -31,10 +31,15 @@ public class App {
                 registry.provide(sessions);
                 registry.discoverAndRegister("discord.commands");
 
+                EnumSet<GatewayIntent> gatewayIntents = EnumSet
+                                .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT);
+                if (gatewayIntents.isEmpty()) {
+                        log.error("Gateway intents are missing!");
+                        return;
+                }
                 JDA jda = JDABuilder
                                 .createDefault(config.token())
-                                .enableIntents(EnumSet
-                                                .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT))
+                                .enableIntents(gatewayIntents)
                                 .addEventListeners(new DiscordListener(registry))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
