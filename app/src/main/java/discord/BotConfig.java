@@ -8,7 +8,10 @@ import org.slf4j.LoggerFactory;
 import discord.util.PathHelper;
 import io.github.cdimascio.dotenv.Dotenv;
 
-public class Config {
+public record BotConfig(String token, String defaultPrefix, int wsPort) {
+}
+
+public class BotConfig {
     public static void ensureLoaded() {
     }
 
@@ -29,7 +32,7 @@ public class Config {
     }
     public static final String DB_PATH = dotenv.get("DB_PATH", "bot.db");
 
-    private static final Logger log = LoggerFactory.getLogger(Config.class);
+    private static final Logger log = LoggerFactory.getLogger(BotConfig.class);
     static {
         log.info("JAR directory: {}", JAR_DIRECTORY);
 
