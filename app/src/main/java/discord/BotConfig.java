@@ -5,6 +5,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 public record BotConfig(String token, String defaultPrefix, int wsPort, String dbPath) {
     public static BotConfig load() {
         Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+        // System.out.println("CWD: " + System.getProperty("user.dir"));
+        // System.out.println("Token found: " + (dotenv.get("DISCORD_TOKEN") != null));
 
         String token = require(dotenv.get("DISCORD_TOKEN"), "DISCORD_TOKEN");
         String defaultPrefix = dotenv.get("PREFIX", "!");
