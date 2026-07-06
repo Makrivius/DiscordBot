@@ -7,6 +7,7 @@
  //Versions
 
 val jdaVersion = "6.3.0"
+val reflectionsVersion = "0.10.2"
 val slf4jVersion = "2.0.13"
 val logbackClassicVersion = "1.5.6"
 val javaDotenvVersion = "5.2.2"
@@ -36,6 +37,7 @@ dependencies {
     implementation("club.minnced:jdave-native-win-x86-64:0.1.5")
 
     implementation("net.dv8tion:JDA:$jdaVersion")
+    implementation("org.reflections:reflections:$reflectionsVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
     implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")

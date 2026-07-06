@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import discord.audioPlayer.AudioPlayerManagerHolder;
+import discord.commands.CommandRegistry;
 import discord.guild.SessionRegistry;
+import discord.hooks.DiscordListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -23,12 +25,17 @@ public class App {
                 log.info("Config loaded, WS port: {}", config.wsPort());
 
                 AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder();
-                SessionRegistry session = new SessionRegistry(audioHolder.get());
+                SessionRegistry sessions = new SessionRegistry(audioHolder.get());
+
+                CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
+                registry.provide(sessions);
+                registry.discoverAndRegister("discord.commands");
 
                 JDA jda = JDABuilder
                                 .createDefault(config.token())
                                 .enableIntents(EnumSet
                                                 .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT))
+                                .addEventListeners(new DiscordListener(registry))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
         }
