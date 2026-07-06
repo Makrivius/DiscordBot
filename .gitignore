@@ -11,3 +11,4 @@ build
 bot.db
 app/src/main/resources
 app/bin/main/schema.sql
+.vscode/settings.json
