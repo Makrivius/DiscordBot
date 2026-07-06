@@ -63,7 +63,7 @@ public class CommandRegistry {
         if (!content.startsWith(prefix))
             return;
 
-        String[] parts = content.substring(prefix.length()).trim().split("\\+s");
+        String[] parts = content.substring(prefix.length()).trim().split("\\s+");
         if (parts.length == 0 || parts[0].isEmpty())
             return;
 
