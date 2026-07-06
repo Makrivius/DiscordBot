@@ -5,12 +5,14 @@ import java.util.EnumSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.commands.CommandRegistry;
 import discord.guild.SessionRegistry;
 import discord.hooks.DiscordListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.audio.AudioModuleConfig;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 public class App {
@@ -41,6 +43,8 @@ public class App {
                                 .createDefault(config.token())
                                 .enableIntents(gatewayIntents)
                                 .addEventListeners(new DiscordListener(registry))
+                                .setAudioModuleConfig(new AudioModuleConfig()
+                                                .withDaveSessionFactory(new JDaveSessionFactory()))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
         }
