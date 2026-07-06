@@ -9,12 +9,9 @@ import discord.util.PathHelper;
 import io.github.cdimascio.dotenv.Dotenv;
 
 public class Config {
-    /** 
-     * Ensures that the configuration is loaded.
-     * <p><strong>Empty method </strong></p>
-     */
-    public static void ensureLoaded() {}
-    
+    public static void ensureLoaded() {
+    }
+
     private static final String JAR_DIRECTORY = PathHelper.getJarDirectory();
     private static final File ENV_FILE = new File(JAR_DIRECTORY, ".env");
 
@@ -25,7 +22,7 @@ public class Config {
 
     public static final String TOKEN = dotenv.get("DISCORD_TOKEN");
     public static final String PREFIX = dotenv.get("PREFIX", "!");
-    public static final String RUN_MIGRATIONS = dotenv.get("RUN_MIGRATIONS", "false");
+    public static final String MIGRATIONS_PATH = dotenv.get("MIGRATIONS_PATH", "migrations.sql");
     static {
         String LOG_LEVEL = dotenv.get("LOG_LEVEL", "INFO");
         System.setProperty("LOG_LEVEL", LOG_LEVEL);
