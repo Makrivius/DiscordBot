@@ -1,4 +1,4 @@
-package discord.Guild;
+package discord.guild;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,4 +1,4 @@
-package discord.AudioPlayer;
+package discord.audioPlayer;
 
 import java.util.ArrayList;
 import java.util.List;

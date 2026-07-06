@@ -1,11 +1,11 @@
-package discord.Guild;
+package discord.guild;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 
-import discord.AudioPlayer.AudioPlayerSendHandler;
-import discord.AudioPlayer.PlayerStateDTO;
-import discord.AudioPlayer.TrackScheduler;
+import discord.audioPlayer.AudioPlayerSendHandler;
+import discord.audioPlayer.PlayerStateDTO;
+import discord.audioPlayer.TrackScheduler;
 import net.dv8tion.jda.api.managers.AudioManager;
 
 public class GuildMusicManager {
@@ -27,5 +27,4 @@ public class GuildMusicManager {
     public PlayerStateDTO snapshot() {
         return scheduler.snapshot();
     }
-
 }

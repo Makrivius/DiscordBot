@@ -1,4 +1,4 @@
-package discord.AudioPlayer;
+package discord.audioPlayer;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;

@@ -1,4 +1,4 @@
-package discord.AudioPlayer;
+package discord.audioPlayer;
 
 import java.nio.ByteBuffer;
 
