@@ -7,11 +7,13 @@
  //Versions
 
 val jdaVersion = "6.3.0"
+val javaWebSocketVersion = "1.5.6"
 val reflectionsVersion = "0.10.2"
 val slf4jVersion = "2.0.13"
 val logbackClassicVersion = "1.5.6"
 val javaDotenvVersion = "5.2.2"
-val lavaplayerVersion = "2.2.6"
+val gson = "2.11.0"
+val lavaPlayerVersion = "2.2.6"
 val lavalinkYoutubeVersion = "1.18.0"
 
 plugins {
@@ -36,14 +38,20 @@ dependencies {
     implementation("club.minnced:jdave-native-linux-aarch64:0.1.5")
     implementation("club.minnced:jdave-native-win-x86-64:0.1.5")
 
+    // Core
     implementation("net.dv8tion:JDA:$jdaVersion")
+    implementation("org.java-websocket:Java-WebSocket:$javaWebSocketVersion")
+    // DI & logs
     implementation("org.reflections:reflections:$reflectionsVersion")
     implementation("org.slf4j:slf4j-api:$slf4jVersion")
     implementation("ch.qos.logback:logback-classic:$logbackClassicVersion")
+    // Dotenv
     implementation("io.github.cdimascio:java-dotenv:$javaDotenvVersion")
-    implementation("dev.arbjerg:lavaplayer:$lavaplayerVersion")
+    // JSON serializer
+    implementation("com.google.code.gson:gson:$gson")
+    //LavaPlayer & YT plugin
+    implementation("dev.arbjerg:lavaplayer:$lavaPlayerVersion")
     implementation("dev.lavalink.youtube:common:$lavalinkYoutubeVersion")
-    implementation("org.reflections:reflections:0.10.2")
 
     implementation(platform("com.fasterxml.jackson:jackson-bom:2.17.0"))
 
