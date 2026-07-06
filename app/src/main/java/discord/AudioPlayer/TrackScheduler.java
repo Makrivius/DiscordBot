@@ -26,8 +26,8 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public void enqueue(AudioTrack track) {
         queue.add(track);
-        if (currentIndex == -1)
-            plaIndex(0);
+        if (player.getPlayingTrack() == null)
+            plaIndex(queue.size() - 1);
         broadcast();
     }
 
