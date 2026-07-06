@@ -24,7 +24,7 @@ public class ArgParser {
     }
 
     public String joinedQuery() {
-        return String.join("", positional);
+        return String.join(" ", positional);
     }
 
     public List<String> positional() {

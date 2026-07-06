@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -11,6 +14,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 public class TrackScheduler extends AudioEventAdapter {
+    private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
     private final AudioPlayer player;
     private final List<AudioTrack> queue = new ArrayList<>();
     private int currentIndex = -1;
@@ -37,6 +41,8 @@ public class TrackScheduler extends AudioEventAdapter {
 
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason reason) {
+        log.info("Track ended: {} | reason: {} | mayStartNext: {} | currentIndex: {}",
+                track.getInfo().title, reason, reason.mayStartNext, currentIndex);
         if (reason.mayStartNext)
             plaIndex(currentIndex + 1);
     }

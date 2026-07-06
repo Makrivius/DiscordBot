@@ -41,7 +41,7 @@ public class GuildMusicManager {
     }
 
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
-        String lookup = query.startsWith("http") ? query : "ytsearch:" + query;
+        String lookup = normalizeQuery(query);
 
         playerManager.loadItemOrdered(this, lookup, new AudioLoadResultHandler() {
             @Override
@@ -77,6 +77,13 @@ public class GuildMusicManager {
                 onFail.accept("Failed to load: " + exception.getMessage());
             }
         });
+    }
+
+    private String normalizeQuery(String query) {
+        if (query.startsWith("http") && query.contains("list=") && !query.contains("playlist?list=")) {
+            return query.replaceAll("[&?]list=[^&]+", "");
+        }
+        return query.startsWith("http") ? query : "ytsearch:" + query;
     }
 
     public PlayerStateDTO snapshot() {
