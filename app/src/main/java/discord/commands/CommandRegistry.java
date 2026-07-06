@@ -42,7 +42,7 @@ public class CommandRegistry {
     }
 
     private Command instantiate(Class<? extends Command> cls) throws Exception {
-        Constructor<?> constructor = cls.getDeclaredConstructor();
+        Constructor<?> constructor = cls.getDeclaredConstructors()[0];
         Class<?>[] paramTypes = constructor.getParameterTypes();
         Object[] args = new Object[paramTypes.length];
 
