@@ -35,6 +35,9 @@ public class AudioPlayerManagerHolder {
 
     public synchronized void refreshYoutubeSource() {
         try {
+            log.info("Starting refresh of YouTube source manager...");
+            debugPrintSources();
+
             Field fields = DefaultAudioPlayerManager.class.getDeclaredField("sourceManagers");
             fields.setAccessible(true);
 
@@ -44,9 +47,28 @@ public class AudioPlayerManagerHolder {
 
             this.yt = new dev.lavalink.youtube.YoutubeAudioSourceManager();
             sources.add(0, this.yt);
-            log.info("Yt source manager forcefully refreshed");
+
+            log.info("YouTube source manager forcefully refreshed successfully.");
+            debugPrintSources();
         } catch (Exception e) {
-            log.error(e.toString());
+            log.error("Failed to refresh YouTube source manager", e);
+        }
+    }
+
+    public void debugPrintSources() {
+        try {
+            Field fields = DefaultAudioPlayerManager.class.getDeclaredField("sourceManagers");
+            fields.setAccessible(true);
+
+            @SuppressWarnings("unchecked")
+            List<AudioSourceManager> sources = (List<AudioSourceManager>) fields.get(this.playerManager);
+
+            log.info("Current registered sources count: {}", sources.size());
+            AudioSourceManager src = sources.getFirst();
+            log.info("[{}] {} (Instance ID: {})",
+                    0, src.getClass().getName(), Integer.toHexString(System.identityHashCode(src)));
+        } catch (Exception e) {
+            log.error("Failed to print debug sources", e);
         }
     }
 }
