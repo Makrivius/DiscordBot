@@ -1,5 +1,6 @@
 # Ignore Gradle project-specific cache directory
 .gradle
+.vscode
 # Ignore Gradle binary output directory
 bin
 # Ignore Gradle build output directory
@@ -11,7 +12,8 @@ build
 bot.db
 app/src/main/resources
 app/bin/main/schema.sql
-.vscode/settings.json
+
 
 # Ignore logs files for debug
 logs
+

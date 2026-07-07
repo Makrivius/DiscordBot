@@ -2,41 +2,51 @@ package discord.ws;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
-import java.net.http.WebSocket;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import discord.guild.SessionRegistry;
-
 public class WsServer extends WebSocketServer {
     private static final Logger log = LoggerFactory.getLogger(WsServer.class);
-    private final SessionRegistry sessions;
-    private final Map<WebSocket, Long> connectionGuildMap = new ConcurrentHashMap<>();
+    private final WsSessionManager sessionManager;
 
-    public WsServer(int port, SessionRegistry sessions) {
+    public WsServer(int port, WsSessionManager sessionManager) {
         super(new InetSocketAddress(port));
-        this.sessions = sessions;
+        this.sessionManager = sessionManager;
     }
 
-@Override
-public void onOpen(org.java_websocket.WebSocket conn, ClientHandshake handshake) {
-    Long guildId = extractGuildId(conn.getResourceDescriptor());
-    if(guildId == null){
-        log.warn("Connection rejected - no guildId param");
-        conn.close(4000, "Missing guildId");
-        return;
+    @Override
+    public void onOpen(org.java_websocket.WebSocket conn, ClientHandshake handshake) {
+        Long guildId = extractGuildId(conn.getResourceDescriptor());
+        if (guildId == null) {
+            conn.close(4000, "Missing guildId");
+            return;
+        }
+        sessionManager.register(conn, guildId);
+        log.info("Ws client connected for guild {}", guildId);
+
     }
-connectionGuildMap.put((WebSocket) conn, guildId);
-log.info("WS client connected for guild {}", guildId);
 
-sessions.get(guildId).a
+    @Override
+    public void onMessage(org.java_websocket.WebSocket conn, String message) {
+        sessionManager.handleCommand(conn, message);
+    }
 
-}
+    @Override
+    public void onClose(org.java_websocket.WebSocket conn, int code, String reason, boolean remote) {
+        sessionManager.unregister(conn);
+    }
+
+    @Override
+    public void onError(org.java_websocket.WebSocket conn, Exception ex) {
+        log.error("Ws error", ex);
+    }
+
+    @Override
+    public void onStart() {
+        log.info("Ws server started");
+    }
 
     private Long extractGuildId(String resourceDescriptor) {
         try {

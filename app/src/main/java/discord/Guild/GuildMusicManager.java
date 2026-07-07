@@ -3,6 +3,7 @@ package discord.guild;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ public class GuildMusicManager {
     private final AudioPlayer player;
     private final TrackScheduler scheduler;
     private final AudioPlayerSendHandler sendHandler;
+    private final List<Consumer<PlayerStateDTO>> listeners = new CopyOnWriteArrayList<>();
 
     public GuildMusicManager(AudioPlayerManager apm) {
         this.playerManager = apm;
@@ -88,5 +90,33 @@ public class GuildMusicManager {
 
     public PlayerStateDTO snapshot() {
         return scheduler.snapshot();
+    }
+
+    public void onStateChange(Consumer<PlayerStateDTO> listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(Consumer<PlayerStateDTO> listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyListeners(PlayerStateDTO state) {
+        listeners.forEach(l -> l.accept(state));
+    }
+
+    public void handleWsCommand(String command) {
+        if (command.startsWith("play:")) {
+            String query = command.substring(5);
+            loadAndQueue(query, false, t -> {
+            }, err -> log.warn(err));
+        } else if (command.equals("skip")) {
+            // scheduler.skip();
+        } else if (command.equals("pause")) {
+            player.setPaused(true);
+        } else if (command.equals("resume")) {
+            player.setPaused(false);
+        } else {
+            log.warn("Unknown WS command: {}", command);
+        }
     }
 }

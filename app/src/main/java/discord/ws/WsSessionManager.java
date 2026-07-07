@@ -27,7 +27,7 @@ public class WsSessionManager {
         Consumer<discord.audioPlayer.PlayerStateDTO> listener = state -> conn.send(gson.toJson(state));
 
         activeListeners.put(conn, listener);
-        manager.onStateChange(listener); // add
+        manager.onStateChange(listener);
 
         conn.send(gson.toJson(manager.snapshot()));
     }
@@ -36,7 +36,7 @@ public class WsSessionManager {
         Long guildId = connectionToGuildMap.remove(conn);
         Consumer<discord.audioPlayer.PlayerStateDTO> listener = activeListeners.remove(conn);
         if (guildId != null && listener != null) {
-            sessions.get(guildId).removeListener(listener); // add
+            sessions.get(guildId).removeListener(listener);
         }
     }
 
