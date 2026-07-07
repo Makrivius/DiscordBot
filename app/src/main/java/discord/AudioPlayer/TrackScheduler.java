@@ -9,19 +9,28 @@ import org.slf4j.LoggerFactory;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
+import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
+import dev.lavalink.youtube.AllClientsFailedException;
+
 public class TrackScheduler extends AudioEventAdapter {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
     private final AudioPlayer player;
+    private final AudioPlayerManagerHolder managerHolder;
     private final List<AudioTrack> queue = new ArrayList<>();
     private int currentIndex = -1;
     private Consumer<PlayerStateDTO> onStateChange;
 
-    public TrackScheduler(AudioPlayer player) {
+    public TrackScheduler(AudioPlayer player, AudioPlayerManagerHolder managerHolder) {
         this.player = player;
+        this.managerHolder = managerHolder;
+    }
+
+    public void setOnStateChanged(Consumer<PlayerStateDTO> callback) {
+        this.onStateChange = callback;
     }
 
     public void enqueue(AudioTrack track) {
@@ -50,6 +59,21 @@ public class TrackScheduler extends AudioEventAdapter {
     private void broadcast() {
         if (onStateChange != null)
             onStateChange.accept(snapshot());
+    }
+
+    @Override
+    public void onTrackException(AudioPlayer player, AudioTrack track, FriendlyException exception) {
+        Throwable cause = exception.getCause();
+        if (cause instanceof AllClientsFailedException) {
+            log.error("All YT clients are failed to load, hard refresh");
+
+            managerHolder.refreshYoutubeSource();
+
+            AudioTrack retriedTrack = track.makeClone();
+            queue.set(currentIndex, retriedTrack);
+            player.playTrack(retriedTrack);
+            broadcast();
+        }
     }
 
     public PlayerStateDTO snapshot() {

@@ -3,17 +3,17 @@ package discord.guild;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import discord.audioPlayer.AudioPlayerManagerHolder;
 
 public class SessionRegistry {
-    private final AudioPlayerManager audioPlayerManager;
+    private final AudioPlayerManagerHolder managerHolder;
     private final Map<Long, GuildMusicManager> sessions = new ConcurrentHashMap<>();
 
-    public SessionRegistry(AudioPlayerManager audioPlayerManager) {
-        this.audioPlayerManager = audioPlayerManager;
+    public SessionRegistry(AudioPlayerManagerHolder managerHolder) {
+        this.managerHolder = managerHolder;
     }
 
     public GuildMusicManager get(long guildId) {
-        return sessions.computeIfAbsent(guildId, id -> new GuildMusicManager(audioPlayerManager));
+        return sessions.computeIfAbsent(guildId, id -> new GuildMusicManager(managerHolder));
     }
 }

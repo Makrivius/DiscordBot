@@ -16,6 +16,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.audioPlayer.AudioPlayerSendHandler;
 import discord.audioPlayer.PlayerStateDTO;
 import discord.audioPlayer.TrackScheduler;
@@ -24,18 +25,22 @@ import net.dv8tion.jda.api.managers.AudioManager;
 public class GuildMusicManager {
     private static final Logger log = LoggerFactory.getLogger(GuildMusicManager.class);
 
+    private final AudioPlayerManagerHolder managerHolder;
     private final AudioPlayerManager playerManager;
     private final AudioPlayer player;
     private final TrackScheduler scheduler;
     private final AudioPlayerSendHandler sendHandler;
     private final List<Consumer<PlayerStateDTO>> listeners = new CopyOnWriteArrayList<>();
 
-    public GuildMusicManager(AudioPlayerManager apm) {
-        this.playerManager = apm;
-        player = apm.createPlayer();
-        scheduler = new TrackScheduler(player);
+    public GuildMusicManager(AudioPlayerManagerHolder managerHolder) {
+        this.managerHolder = managerHolder;
+        playerManager = this.managerHolder.get();
+
+        player = playerManager.createPlayer();
+        scheduler = new TrackScheduler(player, this.managerHolder);
         sendHandler = new AudioPlayerSendHandler(player);
         player.addListener(scheduler);
+        scheduler.setOnStateChanged(this::notifyListeners);
     }
 
     public void connect(AudioManager guildAudioManager) {
@@ -115,6 +120,8 @@ public class GuildMusicManager {
             player.setPaused(true);
         } else if (command.equals("resume")) {
             player.setPaused(false);
+        } else if (command.equals("refreshToken")) {
+            managerHolder.refreshYoutubeSource();
         } else {
             log.warn("Unknown WS command: {}", command);
         }

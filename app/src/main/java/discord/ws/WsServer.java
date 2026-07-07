@@ -36,6 +36,7 @@ public class WsServer extends WebSocketServer {
     @Override
     public void onClose(org.java_websocket.WebSocket conn, int code, String reason, boolean remote) {
         sessionManager.unregister(conn);
+        log.info("Ws client disconnected code: {} reason: {}", code, reason);
     }
 
     @Override

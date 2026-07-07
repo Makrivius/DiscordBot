@@ -10,6 +10,8 @@ import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.commands.CommandRegistry;
 import discord.guild.SessionRegistry;
 import discord.hooks.DiscordListener;
+import discord.ws.WsServer;
+import discord.ws.WsSessionManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.audio.AudioModuleConfig;
@@ -24,13 +26,14 @@ public class App {
                 });
 
                 BotConfig config = BotConfig.load();
-                log.info("Config loaded, WS port: {}", config.wsPort());
+                log.info("Config loaded ");
 
                 AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder();
-                SessionRegistry sessions = new SessionRegistry(audioHolder.get());
+                SessionRegistry sessions = new SessionRegistry(audioHolder);
 
                 CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
                 registry.provide(sessions);
+                registry.provide(audioHolder);
                 registry.discoverAndRegister("discord.commands");
 
                 EnumSet<GatewayIntent> gatewayIntents = EnumSet
@@ -47,5 +50,10 @@ public class App {
                                                 .withDaveSessionFactory(new JDaveSessionFactory()))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
+
+                WsSessionManager wsSessionManager = new WsSessionManager(sessions);
+                WsServer ws = new WsServer(config.wsPort(), wsSessionManager);
+                ws.start();
+                log.info("WS server started on port {}", config.wsPort());
         }
 }
