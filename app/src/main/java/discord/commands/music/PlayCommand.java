@@ -67,7 +67,7 @@ public class PlayCommand implements Command {
         }
 
         GuildMusicManager manager = sessions.get(event.getGuild().getIdLong());
-        manager.connect(audioManager);
+        manager.connect(audioManager, event.getChannel().getName());
 
         AudioChannel audioChannel = voiceState.getChannel();
         if (audioChannel != null)

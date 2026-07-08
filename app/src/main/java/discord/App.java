@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.commands.CommandRegistry;
+import discord.commands.PlayerActionRegistry;
 import discord.guild.SessionRegistry;
 import discord.hooks.DiscordListener;
 import discord.ws.WsServer;
@@ -30,10 +31,11 @@ public class App {
 
                 AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder();
                 SessionRegistry sessions = new SessionRegistry(audioHolder);
+                PlayerActionRegistry actionRegistry = new PlayerActionRegistry();
 
                 CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
                 registry.provide(sessions);
-                registry.provide(audioHolder);
+                registry.provide(actionRegistry);
                 registry.discoverAndRegister("discord.commands");
 
                 EnumSet<GatewayIntent> gatewayIntents = EnumSet
@@ -51,7 +53,7 @@ public class App {
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
 
-                WsSessionManager wsSessionManager = new WsSessionManager(sessions);
+                WsSessionManager wsSessionManager = new WsSessionManager(sessions, actionRegistry);
                 WsServer ws = new WsServer(config.wsPort(), wsSessionManager);
                 ws.start();
                 log.info("WS server started on port {}", config.wsPort());

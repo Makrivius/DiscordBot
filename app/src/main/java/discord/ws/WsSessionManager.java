@@ -1,5 +1,6 @@
 package discord.ws;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -7,19 +8,22 @@ import java.util.function.Consumer;
 import org.java_websocket.WebSocket;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
+import discord.commands.PlayerActionRegistry;
 import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
 
 public class WsSessionManager {
     private final SessionRegistry sessions;
-    private final WsCommandDispatcher dispatcher = new WsCommandDispatcher();
+    private final PlayerActionRegistry actions;
     private final Gson gson = new Gson();
     private final Map<WebSocket, Long> connectionToGuildMap = new ConcurrentHashMap<>();
     private final Map<WebSocket, Consumer<discord.audioPlayer.PlayerStateDTO>> activeListeners = new ConcurrentHashMap<>();
 
-    public WsSessionManager(SessionRegistry sessions) {
+    public WsSessionManager(SessionRegistry sessions, PlayerActionRegistry actions) {
         this.sessions = sessions;
+        this.actions = actions;
     }
 
     public void register(WebSocket conn, long guildId) {
@@ -45,7 +49,15 @@ public class WsSessionManager {
         Long guildId = connectionToGuildMap.get(conn);
         if (guildId == null)
             return;
-        GuildMusicManager manager = sessions.get(guildId);
-        dispatcher.dispatch(manager, command);
+
+        JsonObject json = gson.fromJson(command, JsonObject.class);
+        String actionName = json.get("type").getAsString();
+
+        Map<String, Object> params = new HashMap<>();
+        json.entrySet().forEach(e -> {
+            if (!e.getKey().equals("type"))
+                params.put(e.getKey(), e.getValue().getAsString());
+        });
+        actions.dispatch(sessions.get(guildId), actionName, params);
     }
 }

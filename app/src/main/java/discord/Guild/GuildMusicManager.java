@@ -19,44 +19,34 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.audioPlayer.AudioPlayerSendHandler;
 import discord.audioPlayer.PlayerStateDTO;
+import discord.audioPlayer.PlayerStateMapper;
 import discord.audioPlayer.TrackScheduler;
 import net.dv8tion.jda.api.managers.AudioManager;
 
 public class GuildMusicManager {
     private static final Logger log = LoggerFactory.getLogger(GuildMusicManager.class);
 
-    private final AudioPlayerManagerHolder managerHolder;
     private final AudioPlayerManager playerManager;
     private final AudioPlayer player;
     private final TrackScheduler scheduler;
     private final AudioPlayerSendHandler sendHandler;
     private final List<Consumer<PlayerStateDTO>> listeners = new CopyOnWriteArrayList<>();
 
+    private String channelName;
+
     public GuildMusicManager(AudioPlayerManagerHolder managerHolder) {
-        this.managerHolder = managerHolder;
-        playerManager = this.managerHolder.get();
-
+        this.playerManager = managerHolder.get();
         player = playerManager.createPlayer();
-        scheduler = new TrackScheduler(player, this.managerHolder);
+        scheduler = new TrackScheduler(player, managerHolder);
         sendHandler = new AudioPlayerSendHandler(player);
+
         player.addListener(scheduler);
-        scheduler.setOnStateChanged(this::notifyListeners);
+        scheduler.setOnStateChanged(() -> notifyListeners(snapshot()));
     }
 
-    public void connect(AudioManager guildAudioManager) {
+    public void connect(AudioManager guildAudioManager, String channelName) {
+        this.channelName = channelName;
         guildAudioManager.setSendingHandler(sendHandler);
-    }
-
-    public void onStateChange(Consumer<PlayerStateDTO> listener) {
-        listeners.add(listener);
-    }
-
-    public void removeListener(Consumer<PlayerStateDTO> listener) {
-        listeners.remove(listener);
-    }
-
-    private void notifyListeners(PlayerStateDTO state) {
-        listeners.forEach(l -> l.accept(state));
     }
 
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
@@ -106,8 +96,28 @@ public class GuildMusicManager {
         scheduler.resume();
     }
 
-    public void skip() {
-        scheduler.skip();
+    public void previous() {
+        scheduler.previous();
+    }
+
+    public void next() {
+        scheduler.next();
+    }
+
+    public void toggleShuffle() {
+        scheduler.toggleShuffle();
+    }
+
+    public void cycleRepeat() {
+        scheduler.cycleRepeat();
+    }
+
+    public void seek(long ms) {
+        scheduler.seek(ms);
+    }
+
+    public PlayerStateDTO snapshot() {
+        return PlayerStateMapper.toDto(scheduler, channelName);
     }
 
     private String normalizeQuery(String query) {
@@ -117,7 +127,16 @@ public class GuildMusicManager {
         return query.startsWith("http") ? query : "ytsearch:" + query;
     }
 
-    public PlayerStateDTO snapshot() {
-        return scheduler.snapshot();
+    public void onStateChange(Consumer<PlayerStateDTO> listener) {
+        listeners.add(listener);
     }
+
+    public void removeListener(Consumer<PlayerStateDTO> listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyListeners(PlayerStateDTO state) {
+        listeners.forEach(l -> l.accept(state));
+    }
+
 }

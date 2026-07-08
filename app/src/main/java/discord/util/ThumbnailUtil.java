@@ -1,12 +1,12 @@
 package discord.util;
 
-import java.util.Map;
+import discord.audioPlayer.PlayerStateDTO;
 
 public class ThumbnailUtil {
-    public static Map<String, String> getThumbnails(String videoId) {
-        return Map.of("low", "https://img.youtube.com/vi/" + videoId + "/mqdefault.jpg",
-                "high", "https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg",
-                "highdef", "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg");
+    public static PlayerStateDTO.Artwork getThumbnails(String videoId) {
+        return new PlayerStateDTO.Artwork("https://img.youtube.com/vi/" + videoId + "/mqdefault.jpg",
+                "https://img.youtube.com/vi/" + videoId + "/maxresdefault.jpg",
+                "https://img.youtube.com/vi/" + videoId + "/hqdefault.jpg");
     }
 
 }

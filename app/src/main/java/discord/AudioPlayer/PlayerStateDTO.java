@@ -1,20 +1,25 @@
 package discord.audioPlayer;
 
 import java.util.List;
-import java.util.Map;
 
 public record PlayerStateDTO(
-                List<TrackDTO> queue,
-                int currentIndex,
-                boolean playing,
+                String channelName,
                 long positionMs,
-                boolean paused) {
+                boolean paused,
+                boolean shuffle,
+                String repeat,
+                List<TrackDTO> queue,
+                int currentIndex
+
+) {
         public record TrackDTO(
                         String id,
                         String title,
                         String author,
                         long durationMs,
-                        String source,
-                        Map<String, String> artwork) {
+                        Artwork artwork) {
+        }
+
+        public record Artwork(String low, String high, String highDef) {
         }
 }
