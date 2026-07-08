@@ -13,6 +13,7 @@ import discord.guild.SessionRegistry;
 
 public class WsSessionManager {
     private final SessionRegistry sessions;
+    private final WsCommandDispatcher dispatcher = new WsCommandDispatcher();
     private final Gson gson = new Gson();
     private final Map<WebSocket, Long> connectionToGuildMap = new ConcurrentHashMap<>();
     private final Map<WebSocket, Consumer<discord.audioPlayer.PlayerStateDTO>> activeListeners = new ConcurrentHashMap<>();
@@ -44,6 +45,7 @@ public class WsSessionManager {
         Long guildId = connectionToGuildMap.get(conn);
         if (guildId == null)
             return;
-        sessions.get(guildId).handleWsCommand(command); // add
+        GuildMusicManager manager = sessions.get(guildId);
+        dispatcher.dispatch(manager, command);
     }
 }

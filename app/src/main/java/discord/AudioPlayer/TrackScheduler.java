@@ -15,6 +15,7 @@ import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import dev.lavalink.youtube.AllClientsFailedException;
+import discord.util.ThumbnailUtil;
 
 public class TrackScheduler extends AudioEventAdapter {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
@@ -48,17 +49,31 @@ public class TrackScheduler extends AudioEventAdapter {
         broadcast();
     }
 
+    private void broadcast() {
+        if (onStateChange != null)
+            onStateChange.accept(snapshot());
+    }
+
+    public void pause() {
+        player.setPaused(true);
+        broadcast();
+    }
+
+    public void resume() {
+        player.setPaused(false);
+        broadcast();
+    }
+
+    public void skip() {
+        player.stopTrack();
+    }
+
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason reason) {
         log.info("Track ended: {} | reason: {} | mayStartNext: {} | currentIndex: {}",
                 track.getInfo().title, reason, reason.mayStartNext, currentIndex);
         if (reason.mayStartNext)
             plaIndex(currentIndex + 1);
-    }
-
-    private void broadcast() {
-        if (onStateChange != null)
-            onStateChange.accept(snapshot());
     }
 
     @Override
@@ -89,6 +104,7 @@ public class TrackScheduler extends AudioEventAdapter {
 
     private PlayerStateDTO.TrackDTO toDto(AudioTrack track) {
         AudioTrackInfo info = track.getInfo();
-        return new PlayerStateDTO.TrackDTO(track.getIdentifier(), info.title, info.author, info.length, info.uri, null);
+        return new PlayerStateDTO.TrackDTO(track.getIdentifier(), info.title, info.author, info.length, info.uri,
+                ThumbnailUtil.getThumbnails(track.getIdentifier()));
     }
 }

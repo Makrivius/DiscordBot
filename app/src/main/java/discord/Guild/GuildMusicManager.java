@@ -47,6 +47,18 @@ public class GuildMusicManager {
         guildAudioManager.setSendingHandler(sendHandler);
     }
 
+    public void onStateChange(Consumer<PlayerStateDTO> listener) {
+        listeners.add(listener);
+    }
+
+    public void removeListener(Consumer<PlayerStateDTO> listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyListeners(PlayerStateDTO state) {
+        listeners.forEach(l -> l.accept(state));
+    }
+
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
         String lookup = normalizeQuery(query);
 
@@ -86,6 +98,18 @@ public class GuildMusicManager {
         });
     }
 
+    public void pause() {
+        scheduler.pause();
+    }
+
+    public void resume() {
+        scheduler.resume();
+    }
+
+    public void skip() {
+        scheduler.skip();
+    }
+
     private String normalizeQuery(String query) {
         if (query.startsWith("http") && query.contains("list=") && !query.contains("playlist?list=")) {
             return query.replaceAll("[&?]list=[^&]+", "");
@@ -95,35 +119,5 @@ public class GuildMusicManager {
 
     public PlayerStateDTO snapshot() {
         return scheduler.snapshot();
-    }
-
-    public void onStateChange(Consumer<PlayerStateDTO> listener) {
-        listeners.add(listener);
-    }
-
-    public void removeListener(Consumer<PlayerStateDTO> listener) {
-        listeners.remove(listener);
-    }
-
-    private void notifyListeners(PlayerStateDTO state) {
-        listeners.forEach(l -> l.accept(state));
-    }
-
-    public void handleWsCommand(String command) {
-        if (command.startsWith("play:")) {
-            String query = command.substring(5);
-            loadAndQueue(query, false, t -> {
-            }, err -> log.warn(err));
-        } else if (command.equals("skip")) {
-            // scheduler.skip();
-        } else if (command.equals("pause")) {
-            player.setPaused(true);
-        } else if (command.equals("resume")) {
-            player.setPaused(false);
-        } else if (command.equals("refreshToken")) {
-            managerHolder.refreshYoutubeSource();
-        } else {
-            log.warn("Unknown WS command: {}", command);
-        }
     }
 }
