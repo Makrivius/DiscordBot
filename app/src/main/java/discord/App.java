@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import discord.audioPlayer.AudioPlayerManagerHolder;
 import discord.commands.CommandRegistry;
-import discord.commands.PlayerActionRegistry;
+import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
 import discord.hooks.DiscordListener;
 import discord.ws.WsServer;
@@ -31,12 +31,13 @@ public class App {
 
                 AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder();
                 SessionRegistry sessions = new SessionRegistry(audioHolder);
-                PlayerActionRegistry actionRegistry = new PlayerActionRegistry();
 
                 CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
                 registry.provide(sessions);
-                registry.provide(actionRegistry);
                 registry.discoverAndRegister("discord.commands");
+
+                DiscordCommandDispatcher dispatcher = new DiscordCommandDispatcher(registry, sessions,
+                                config.defaultPrefix());
 
                 EnumSet<GatewayIntent> gatewayIntents = EnumSet
                                 .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT);
@@ -47,13 +48,13 @@ public class App {
                 JDA jda = JDABuilder
                                 .createDefault(config.token())
                                 .enableIntents(gatewayIntents)
-                                .addEventListeners(new DiscordListener(registry))
+                                .addEventListeners(new DiscordListener(dispatcher))
                                 .setAudioModuleConfig(new AudioModuleConfig()
                                                 .withDaveSessionFactory(new JDaveSessionFactory()))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
 
-                WsSessionManager wsSessionManager = new WsSessionManager(sessions, actionRegistry);
+                WsSessionManager wsSessionManager = new WsSessionManager(sessions, registry);
                 WsServer ws = new WsServer(config.wsPort(), wsSessionManager);
                 ws.start();
                 log.info("WS server started on port {}", config.wsPort());
