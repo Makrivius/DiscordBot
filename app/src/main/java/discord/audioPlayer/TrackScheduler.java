@@ -77,12 +77,12 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void previous() {
-        if (history.isEmpty())
-            return;
         if (player.getPlayingTrack().getPosition() <= 3000) {
             player.getPlayingTrack().setPosition(0);
             return;
         }
+        if (history.isEmpty())
+            return;
 
         AudioTrack prev = history.pop();
         queue.add(currentIndex, prev);
