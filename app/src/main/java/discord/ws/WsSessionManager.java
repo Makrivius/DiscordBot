@@ -1,29 +1,36 @@
 package discord.ws;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import org.java_websocket.WebSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import discord.commands.PlayerActionRegistry;
+import discord.commands.Command;
+import discord.commands.CommandContext;
+import discord.commands.CommandRegistry;
 import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
 
 public class WsSessionManager {
+    private final Logger log = LoggerFactory.getLogger(WsSessionManager.class);
+
     private final SessionRegistry sessions;
-    private final PlayerActionRegistry actions;
+    private final CommandRegistry registry;
     private final Gson gson = new Gson();
     private final Map<WebSocket, Long> connectionToGuildMap = new ConcurrentHashMap<>();
     private final Map<WebSocket, Consumer<discord.audioPlayer.PlayerStateDTO>> activeListeners = new ConcurrentHashMap<>();
 
-    public WsSessionManager(SessionRegistry sessions, PlayerActionRegistry actions) {
+    public WsSessionManager(SessionRegistry sessions, CommandRegistry registry) {
         this.sessions = sessions;
-        this.actions = actions;
+        this.registry = registry;
     }
 
     public void register(WebSocket conn, long guildId) {
@@ -53,11 +60,23 @@ public class WsSessionManager {
         JsonObject json = gson.fromJson(command, JsonObject.class);
         String actionName = json.get("type").getAsString();
 
-        Map<String, Object> params = new HashMap<>();
+        Map<String, String> named = new HashMap<>();
         json.entrySet().forEach(e -> {
             if (!e.getKey().equals("type"))
-                params.put(e.getKey(), e.getValue().getAsString());
+                named.put(e.getKey(), e.getValue().getAsString());
         });
-        actions.dispatch(sessions.get(guildId), actionName, params);
+        Command cmd = registry.get(actionName);
+        if (cmd == null) {
+            log.warn("Unknown player action: {}", actionName);
+            return;
+        }
+        CommandContext ctx = new CommandContext(guildId, sessions.get(guildId), List.of(), named,
+                msg -> {
+                }, err -> log.warn("WS command '{}' failed: {}", actionName, err));
+        try {
+            cmd.execute(ctx);
+        } catch (Exception e) {
+            log.error("Action '{}' failed", actionName, e);
+        }
     }
 }

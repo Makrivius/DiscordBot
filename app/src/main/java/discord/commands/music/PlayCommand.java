@@ -15,7 +15,7 @@ public class PlayCommand implements Command {
     @Override
     public void execute(CommandContext ctx) {
         if (ctx.positionArgs().isEmpty()) {
-            ctx.error("Ussage: play<query|url> [--shuffle]");
+            ctx.error("Usage: play<query|url> [--shuffle]");
             return;
         }
         String query = String.join(" ", ctx.positionArgs());
