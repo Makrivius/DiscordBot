@@ -1,5 +1,7 @@
 package discord.commands;
 
+import javax.annotation.Nonnull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +48,8 @@ public class DiscordCommandDispatcher {
         ArgParser parsed = new ArgParser(java.util.Arrays.copyOfRange(parts, 1, parts.length));
         CommandContext ctx = new CommandContext(event.getGuild().getIdLong(),
                 sessions.get(event.getGuild().getIdLong()), parsed.positional(), parsed.named(),
-                msg -> event.getChannel().sendMessage(msg).queue(), err -> event.getChannel().sendMessage(err).queue());
+                (@Nonnull String msg) -> event.getChannel().sendMessage(msg).queue(), 
+                (@Nonnull String err) -> event.getChannel().sendMessage(err).queue());
         try {
             command.execute(ctx);
         } catch (Exception e) {
