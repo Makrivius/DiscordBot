@@ -1,8 +1,6 @@
 package discord.audioPlayer;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,7 +21,6 @@ public class TrackScheduler extends AudioEventAdapter {
     private final AudioPlayer player;
     private final AudioPlayerManagerHolder managerHolder;
     private final List<AudioTrack> queue = new ArrayList<>();
-    private final Deque<AudioTrack> history = new ArrayDeque<>();
     private boolean shuffle = false;
     private String repeatMode = "off";
     private int currentIndex = -1;
@@ -63,6 +60,7 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void enqueue(AudioTrack track) {
+        track.setUserData(java.util.UUID.randomUUID().toString());
         queue.add(track);
         if (player.getPlayingTrack() == null)
             playIndex(queue.size() - 1);
@@ -91,7 +89,7 @@ public class TrackScheduler extends AudioEventAdapter {
         if (queue.isEmpty())
             return;
 
-        int prevIndex = currentIndex - 1;
+        int prevIndex = player.getPlayingTrack() == null ? currentIndex - 1 : currentIndex;
         if (prevIndex < 0)
             prevIndex = 0;
 

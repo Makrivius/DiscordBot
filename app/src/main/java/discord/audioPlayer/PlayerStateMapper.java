@@ -1,6 +1,7 @@
 package discord.audioPlayer;
 
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
+import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import discord.util.ThumbnailUtil;
 
@@ -19,8 +20,9 @@ public class PlayerStateMapper {
     }
 
     private static PlayerStateDTO.TrackDTO toTrackDto(AudioTrack track) {
-        var info = track.getInfo();
-        return new PlayerStateDTO.TrackDTO(track.getIdentifier(), info.title, info.author, info.length,
+        AudioTrackInfo info = track.getInfo();
+        String queueId = (String) track.getUserData();
+        return new PlayerStateDTO.TrackDTO(queueId, track.getIdentifier(), info.title, info.author, info.length,
                 ThumbnailUtil.getThumbnails(track.getIdentifier()));
     }
 }

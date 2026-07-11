@@ -14,6 +14,7 @@ public record PlayerStateDTO(
 ) {
         public record TrackDTO(
                         String id,
+                        String queueId,
                         String title,
                         String author,
                         long durationMs,
