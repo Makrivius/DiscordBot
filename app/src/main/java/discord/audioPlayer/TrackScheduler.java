@@ -4,6 +4,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Timer;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +66,7 @@ public class TrackScheduler extends AudioEventAdapter {
     public void enqueue(AudioTrack track) {
         queue.add(track);
         if (player.getPlayingTrack() == null)
-            plaIndex(queue.size() - 1);
+            playIndex(queue.size() - 1);
         broadcast();
     }
 
@@ -77,8 +81,9 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void previous() {
-        if (player.getPlayingTrack().getPosition() <= 3000) {
+        if (player.getPlayingTrack().getPosition() >= 3000) {
             player.getPlayingTrack().setPosition(0);
+            broadcast();
             return;
         }
         if (history.isEmpty())
@@ -86,11 +91,11 @@ public class TrackScheduler extends AudioEventAdapter {
 
         AudioTrack prev = history.pop();
         queue.add(currentIndex, prev);
-        plaIndex(currentIndex);
+        playIndex(currentIndex);
     }
 
     public void next() {
-        player.stopTrack();
+        advance();
     }
 
     public void toggleShuffle() {
@@ -115,13 +120,41 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     @Override
+    public void onTrackStart(AudioPlayer player, AudioTrack track) {
+        CompletableFuture.delayedExecutor(3100, TimeUnit.MILLISECONDS).execute(this::broadcast);
+    }
+
+    @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason reason) {
         log.info("Track ended: {} | reason: {} | mayStartNext: {} | currentIndex: {}",
                 track.getInfo().title, reason, reason.mayStartNext, currentIndex);
-        if (reason.mayStartNext) {
-            history.push(track);
-            plaIndex(currentIndex + 1);
+        if (!reason.mayStartNext)
+            return;
+
+        history.push(track);
+
+        if (repeatMode.equals("track")) {
+            AudioTrack clone = queue.get(currentIndex).makeClone();
+            queue.set(currentIndex, clone);
+            playIndex(currentIndex);
+            return;
         }
+
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= queue.size()) {
+            if (repeatMode.equals("queue")) {
+                for (int idx = 0; idx < queue.size(); idx++) {
+                    queue.set(idx, queue.get(idx).makeClone());
+                }
+                playIndex(0);
+            } else {
+                currentIndex = -1;
+                broadcast();
+            }
+            return;
+        }
+
+        playIndex(nextIndex);
     }
 
     @Override
@@ -139,12 +172,29 @@ public class TrackScheduler extends AudioEventAdapter {
         }
     }
 
-    private void plaIndex(int i) {
+    private void playIndex(int i) {
         if (i < 0 || i >= queue.size())
             return;
         currentIndex = i;
         player.playTrack(queue.get(i));
         broadcast();
+    }
+
+    private void advance() {
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= queue.size()) {
+            if (repeatMode.equals("queue")) {
+                for (int idx = 0; idx < queue.size(); idx++) {
+                    queue.set(idx, queue.get(idx).makeClone());
+                }
+                playIndex(0);
+            } else {
+                currentIndex = -1;
+                broadcast();
+            }
+            return;
+        }
+        playIndex(nextIndex);
     }
 
     private void broadcast() {

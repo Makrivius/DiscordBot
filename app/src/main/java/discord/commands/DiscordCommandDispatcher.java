@@ -48,7 +48,7 @@ public class DiscordCommandDispatcher {
         ArgParser parsed = new ArgParser(java.util.Arrays.copyOfRange(parts, 1, parts.length));
         CommandContext ctx = new CommandContext(event.getGuild().getIdLong(),
                 sessions.get(event.getGuild().getIdLong()), parsed.positional(), parsed.named(),
-                (@Nonnull String msg) -> event.getChannel().sendMessage(msg).queue(), 
+                (@Nonnull String msg) -> event.getChannel().sendMessage(msg).queue(),
                 (@Nonnull String err) -> event.getChannel().sendMessage(err).queue());
         try {
             command.execute(ctx);
@@ -77,9 +77,14 @@ public class DiscordCommandDispatcher {
         }
 
         GuildMusicManager manager = sessions.get(event.getGuild().getIdLong());
-        manager.connect(audioManager, event.getChannel().getName());
 
         AudioChannel audioChannel = voiceState.getChannel();
+        if (audioChannel == null) {
+            log.error("Cannot get audioChannel info!");
+            return false;
+        }
+        manager.connect(audioManager, audioChannel.getName());
+
         if (audioChannel != null)
             audioManager.openAudioConnection(audioChannel);
         return true;
