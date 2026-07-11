@@ -13,19 +13,22 @@ public class CommandContext {
     private final Map<String, String> namedArgs;
     private final Consumer<String> reply;
     private final Consumer<String> onError;
+    private final Consumer<Object> replyData;
 
     public CommandContext(long guildId,
             GuildMusicManager musicManager,
             List<String> positionalArgs,
             Map<String, String> namedArgs,
             Consumer<String> reply,
-            Consumer<String> onError) {
+            Consumer<String> onError,
+            Consumer<Object> replyData) {
         this.guildId = guildId;
         this.musicManager = musicManager;
         this.positionalArgs = positionalArgs;
         this.namedArgs = namedArgs;
         this.reply = reply;
         this.onError = onError;
+        this.replyData = replyData;
     }
 
     public long guildId() {
@@ -54,5 +57,9 @@ public class CommandContext {
 
     public void error(String msg) {
         onError.accept(msg);
+    }
+
+    public void replyData(Object payload) {
+        replyData.accept(payload);
     }
 }

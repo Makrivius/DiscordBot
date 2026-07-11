@@ -21,6 +21,10 @@ public record PlayerStateDTO(
                         Artwork artwork) {
         }
 
+        public record SearchResultDTO(String id, String title, String author, long durationMs,
+                        PlayerStateDTO.Artwork artwork) {
+        }
+
         public record Artwork(String low, String high, String highDef) {
         }
 }

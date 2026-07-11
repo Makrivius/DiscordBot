@@ -49,7 +49,8 @@ public class DiscordCommandDispatcher {
         CommandContext ctx = new CommandContext(event.getGuild().getIdLong(),
                 sessions.get(event.getGuild().getIdLong()), parsed.positional(), parsed.named(),
                 (@Nonnull String msg) -> event.getChannel().sendMessage(msg).queue(),
-                (@Nonnull String err) -> event.getChannel().sendMessage(err).queue());
+                (@Nonnull String err) -> event.getChannel().sendMessage(err).queue(),
+                (@Nonnull Object payload) -> event.getChannel().sendMessage(payload.toString()).queue());
         try {
             command.execute(ctx);
         } catch (Exception e) {

@@ -72,7 +72,8 @@ public class WsSessionManager {
         }
         CommandContext ctx = new CommandContext(guildId, sessions.get(guildId), List.of(), named,
                 msg -> {
-                }, err -> log.warn("WS command '{}' failed: {}", actionName, err));
+                }, err -> log.warn("WS command '{}' failed: {}", actionName, err),
+                payload -> conn.send(gson.toJson(Map.of("type", "searchResults", "results", payload))));
         try {
             cmd.execute(ctx);
         } catch (Exception e) {

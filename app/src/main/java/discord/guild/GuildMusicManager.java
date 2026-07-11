@@ -88,6 +88,34 @@ public class GuildMusicManager {
         });
     }
 
+    public void search(String query, Consumer<List<AudioTrack>> onResults, Consumer<String> onFail) {
+        String lookup = normalizeQuery(query);
+
+        playerManager.loadItemOrdered(this, lookup, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                onResults.accept(List.of(track));
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                onResults.accept(new ArrayList<>(playlist.getTracks()));
+            }
+
+            @Override
+            public void noMatches() {
+                log.warn("No matches for search query {}", query);
+                onFail.accept("No matches found for: " + query);
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                log.error("Search failed for query '{}'", query, exception);
+                onFail.accept("Search failed: " + exception.getMessage());
+            }
+        });
+    }
+
     public void pause() {
         scheduler.pause();
     }
