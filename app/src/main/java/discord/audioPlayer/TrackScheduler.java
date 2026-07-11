@@ -155,7 +155,9 @@ public class TrackScheduler extends AudioEventAdapter {
         if (i < 0 || i >= queue.size())
             return;
         currentIndex = i;
-        player.playTrack(queue.get(i).makeClone());
+        AudioTrack retriedTrack = queue.get(i).makeClone();
+        retriedTrack.setUserData(queue.get(i));
+        player.playTrack(retriedTrack);
         broadcast();
     }
 
