@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
-import java.util.Timer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -67,7 +66,8 @@ public class TrackScheduler extends AudioEventAdapter {
         queue.add(track);
         if (player.getPlayingTrack() == null)
             playIndex(queue.size() - 1);
-        broadcast();
+        else
+            broadcast();
     }
 
     public void pause() {
@@ -81,17 +81,21 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void previous() {
-        if (player.getPlayingTrack().getPosition() >= 3000) {
-            player.getPlayingTrack().setPosition(0);
-            broadcast();
+        AudioTrack current = player.getPlayingTrack();
+        if (current != null && current.getPosition() >= 3000) {
+            current.setPosition(0);
+            CompletableFuture.delayedExecutor(150, TimeUnit.MILLISECONDS).execute(this::broadcast);
             return;
         }
-        if (history.isEmpty())
+
+        if (queue.isEmpty())
             return;
 
-        AudioTrack prev = history.pop();
-        queue.add(currentIndex, prev);
-        playIndex(currentIndex);
+        int prevIndex = currentIndex - 1;
+        if (prevIndex < 0)
+            prevIndex = 0;
+
+        playIndex(prevIndex);
     }
 
     public void next() {
@@ -115,7 +119,7 @@ public class TrackScheduler extends AudioEventAdapter {
     public void seek(long positionMs) {
         if (player.getPlayingTrack() != null) {
             player.getPlayingTrack().setPosition(positionMs);
-            broadcast();
+            CompletableFuture.delayedExecutor(150, TimeUnit.MILLISECONDS).execute(this::broadcast);
         }
     }
 
@@ -131,30 +135,12 @@ public class TrackScheduler extends AudioEventAdapter {
         if (!reason.mayStartNext)
             return;
 
-        history.push(track);
-
         if (repeatMode.equals("track")) {
-            AudioTrack clone = queue.get(currentIndex).makeClone();
-            queue.set(currentIndex, clone);
             playIndex(currentIndex);
             return;
         }
 
-        int nextIndex = currentIndex + 1;
-        if (nextIndex >= queue.size()) {
-            if (repeatMode.equals("queue")) {
-                for (int idx = 0; idx < queue.size(); idx++) {
-                    queue.set(idx, queue.get(idx).makeClone());
-                }
-                playIndex(0);
-            } else {
-                currentIndex = -1;
-                broadcast();
-            }
-            return;
-        }
-
-        playIndex(nextIndex);
+        advance();
     }
 
     @Override
@@ -162,13 +148,8 @@ public class TrackScheduler extends AudioEventAdapter {
         Throwable cause = exception.getCause();
         if (cause instanceof AllClientsFailedException) {
             log.error("All YT clients are failed to load, hard refresh");
-
             managerHolder.refreshYoutubeSource();
-
-            AudioTrack retriedTrack = track.makeClone();
-            queue.set(currentIndex, retriedTrack);
-            player.playTrack(retriedTrack);
-            broadcast();
+            playIndex(currentIndex);
         }
     }
 
@@ -176,7 +157,7 @@ public class TrackScheduler extends AudioEventAdapter {
         if (i < 0 || i >= queue.size())
             return;
         currentIndex = i;
-        player.playTrack(queue.get(i));
+        player.playTrack(queue.get(i).makeClone());
         broadcast();
     }
 
@@ -184,9 +165,6 @@ public class TrackScheduler extends AudioEventAdapter {
         int nextIndex = currentIndex + 1;
         if (nextIndex >= queue.size()) {
             if (repeatMode.equals("queue")) {
-                for (int idx = 0; idx < queue.size(); idx++) {
-                    queue.set(idx, queue.get(idx).makeClone());
-                }
                 playIndex(0);
             } else {
                 currentIndex = -1;
