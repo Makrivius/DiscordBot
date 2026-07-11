@@ -112,6 +112,10 @@ public class GuildMusicManager {
         scheduler.cycleRepeat();
     }
 
+    public void reorder(List<String> newQueueIds) {
+        scheduler.reorder(newQueueIds);
+    }
+
     public void seek(long ms) {
         scheduler.seek(ms);
     }

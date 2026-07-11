@@ -2,8 +2,11 @@ package discord.audioPlayer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,7 +92,7 @@ public class TrackScheduler extends AudioEventAdapter {
         if (queue.isEmpty())
             return;
 
-        int prevIndex = player.getPlayingTrack() == null ? currentIndex - 1 : currentIndex;
+        int prevIndex = player.getPlayingTrack() == null ? currentIndex : currentIndex - 1;
         if (prevIndex < 0)
             prevIndex = 0;
 
@@ -111,6 +114,23 @@ public class TrackScheduler extends AudioEventAdapter {
             case "track" -> "queue";
             default -> "off";
         };
+        broadcast();
+    }
+
+    public void reorder(List<String> newQueueIds) {
+        Map<String, AudioTrack> byQueueId = queue.stream()
+                .collect(Collectors.toMap(t -> (String) t.getUserData(), t -> t));
+
+        String currentQueueId = currentIndex >= 0 ? (String) queue.get(currentIndex).getUserData() : null;
+
+        List<AudioTrack> reordered = newQueueIds.stream().map(byQueueId::get).filter(Objects::nonNull).toList();
+
+        queue.clear();
+        queue.addAll(reordered);
+
+        if (currentQueueId != null) {
+            currentIndex = queue.stream().map(t -> (String) t.getUserData()).toList().indexOf(currentQueueId);
+        }
         broadcast();
     }
 
@@ -156,7 +176,7 @@ public class TrackScheduler extends AudioEventAdapter {
             return;
         currentIndex = i;
         AudioTrack retriedTrack = queue.get(i).makeClone();
-        retriedTrack.setUserData(queue.get(i));
+        retriedTrack.setUserData(queue.get(i).getUserData());
         player.playTrack(retriedTrack);
         broadcast();
     }
@@ -168,6 +188,7 @@ public class TrackScheduler extends AudioEventAdapter {
                 playIndex(0);
             } else {
                 currentIndex = -1;
+                player.setPaused(true);
                 broadcast();
             }
             return;

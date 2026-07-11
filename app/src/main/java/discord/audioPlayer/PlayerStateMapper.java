@@ -22,7 +22,7 @@ public class PlayerStateMapper {
     private static PlayerStateDTO.TrackDTO toTrackDto(AudioTrack track) {
         AudioTrackInfo info = track.getInfo();
         String queueId = (String) track.getUserData();
-        return new PlayerStateDTO.TrackDTO(queueId, track.getIdentifier(), info.title, info.author, info.length,
+        return new PlayerStateDTO.TrackDTO(track.getIdentifier(), queueId, info.title, info.author, info.length,
                 ThumbnailUtil.getThumbnails(track.getIdentifier()));
     }
 }
