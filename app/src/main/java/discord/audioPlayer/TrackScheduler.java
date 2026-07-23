@@ -58,7 +58,7 @@ public class TrackScheduler extends AudioEventAdapter {
         this.managerHolder = managerHolder;
     }
 
-    public void setOnStateChanged(Runnable callback) {
+    public void SetBroadcastHook(Runnable callback) {
         this.onStateChange = callback;
     }
 

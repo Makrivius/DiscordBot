@@ -18,6 +18,7 @@ import discord.commands.CommandContext;
 import discord.commands.CommandRegistry;
 import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
+import discord.util.JsonUtil;
 
 public class WsSessionManager {
     private final Logger log = LoggerFactory.getLogger(WsSessionManager.class);
@@ -60,11 +61,7 @@ public class WsSessionManager {
         JsonObject json = gson.fromJson(command, JsonObject.class);
         String actionName = json.get("type").getAsString();
 
-        Map<String, String> named = new HashMap<>();
-        json.entrySet().forEach(e -> {
-            if (!e.getKey().equals("type"))
-                named.put(e.getKey(), e.getValue().getAsString());
-        });
+        Map<String, String> named = JsonUtil.toStringMap(json, "type");
         Command cmd = registry.get(actionName);
         if (cmd == null) {
             log.warn("Unknown player action: {}", actionName);

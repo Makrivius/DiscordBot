@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
@@ -38,7 +35,7 @@ public class GuildMusicManager {
         sendHandler = new AudioPlayerSendHandler(player);
 
         player.addListener(scheduler);
-        scheduler.setOnStateChanged(() -> notifyListeners(snapshot()));
+        scheduler.SetBroadcastHook(() -> notifyListeners(snapshot()));
     }
 
     public void connect(AudioManager guildAudioManager, String channelName) {
