@@ -28,6 +28,9 @@ public class WsSessionManager {
     private final Map<WebSocket, Long> connectionToGuildMap = new ConcurrentHashMap<>();
     private final Map<WebSocket, Consumer<discord.audioPlayer.PlayerStateDTO>> activeListeners = new ConcurrentHashMap<>();
 
+    private final Map<WebSocket, Long> lastSearchAt = new ConcurrentHashMap<>();
+    private static final long SEARCH_COOLDOWN_MS = 3000;
+
     public WsSessionManager(SessionRegistry sessions, CommandRegistry registry) {
         this.sessions = sessions;
         this.registry = registry;
@@ -46,6 +49,7 @@ public class WsSessionManager {
 
     public void unregister(WebSocket conn) {
         Long guildId = connectionToGuildMap.remove(conn);
+        lastSearchAt.remove(conn);
         Consumer<discord.audioPlayer.PlayerStateDTO> listener = activeListeners.remove(conn);
         if (guildId != null && listener != null) {
             sessions.get(guildId).removeListener(listener);
@@ -62,6 +66,17 @@ public class WsSessionManager {
 
         Map<String, String> named = JsonUtil.toStringMap(json, "type");
         Command cmd = registry.get(actionName);
+
+        if (actionName.equals("search")) {
+            long now = System.currentTimeMillis();
+            Long last = lastSearchAt.get(conn);
+            if (last != null && now - last < SEARCH_COOLDOWN_MS) {
+                conn.send(gson.toJson(Map.of("type", "searchError", "message", "Please wait before searching again")));
+                return;
+            }
+            lastSearchAt.put(conn, now);
+        }
+
         if (cmd == null) {
             log.warn("Unknown player action: {}", actionName);
             return;

@@ -10,6 +10,7 @@ public class PlayerStateMapper {
         var trackDtos = scheduler.getQueue().stream().map(PlayerStateMapper::toTrackDto).toList();
         AudioTrack current = scheduler.getCurrentTrack();
         return new PlayerStateDTO(
+                "state",
                 channelName,
                 current != null ? current.getPosition() : 0,
                 scheduler.isPaused(),

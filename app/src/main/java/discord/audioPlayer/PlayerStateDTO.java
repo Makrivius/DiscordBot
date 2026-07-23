@@ -3,6 +3,7 @@ package discord.audioPlayer;
 import java.util.List;
 
 public record PlayerStateDTO(
+                String type,
                 String channelName,
                 long positionMs,
                 boolean paused,
