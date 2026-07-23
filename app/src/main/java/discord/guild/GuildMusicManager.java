@@ -86,6 +86,7 @@ public class GuildMusicManager {
                 onFail.accept("Failed to load: " + exception.getMessage());
             }
         });
+        scheduler.resume();
     }
 
     public void search(String query, Consumer<List<AudioTrack>> onResults, Consumer<String> onFail) {

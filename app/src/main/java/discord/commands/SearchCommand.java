@@ -15,8 +15,9 @@ public class SearchCommand implements Command {
     @Override
     public void execute(CommandContext ctx) {
         String query = ctx.named("query");
-        if (query == null || query.isBlank()) {
-            ctx.error("Missing query");
+        String requestId = ctx.named("requestId");
+        if (query == null || query.isBlank() || requestId.isBlank()) {
+            ctx.error("Missing query or requestId");
             return;
         }
         ctx.musicManager().search(query, results -> ctx.replyData(results.stream().map(this::toDto).toList()),
