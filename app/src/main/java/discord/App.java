@@ -11,8 +11,7 @@ import discord.commands.CommandRegistry;
 import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
 import discord.hooks.DiscordListener;
-import discord.ws.WsServer;
-import discord.ws.WsSessionManager;
+import discord.http.AppServer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.audio.AudioModuleConfig;
@@ -54,9 +53,8 @@ public class App {
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
 
-                WsSessionManager wsSessionManager = new WsSessionManager(sessions, registry);
-                WsServer ws = new WsServer(config.wsPort(), wsSessionManager);
-                ws.start();
-                log.info("WS server started on port {}", config.wsPort());
+                AppServer server = new AppServer(config.clientId(), config.secret(), sessions, registry);
+                server.start(config.wsPort());
+                log.info("Server started on port {}", config.wsPort());
         }
 }

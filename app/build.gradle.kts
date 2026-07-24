@@ -7,7 +7,7 @@ plugins {
 // Global Dependency Versions
 object Versions {
     const val jda = "6.3.0"
-    const val javaWebSocket = "1.5.6"
+    const val javalin = "6.4.0"
     const val reflections = "0.10.2"
     const val slf4j = "2.0.13"
     const val logbackClassic = "1.5.6"
@@ -32,7 +32,7 @@ dependencies {
     implementation("club.minnced:jdave-native-linux-aarch64:${Versions.jdaVea}")
     implementation("club.minnced:jdave-native-win-x86-64:${Versions.jdaVea}")
     implementation("net.dv8tion:JDA:${Versions.jda}")
-    implementation("org.java-websocket:Java-WebSocket:${Versions.javaWebSocket}")
+    implementation("io.javalin:javalin:${Versions.javalin}")
 
     // Audio Player & Plugins
     implementation("dev.arbjerg:lavaplayer:${Versions.lavaPlayer}")
