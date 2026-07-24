@@ -47,6 +47,10 @@ public class GuildMusicManager {
         loader.enqueueById(trackId, onSuccess, onFail);
     }
 
+    public void playNowById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+        loader.playNowById(trackId, onSuccess, onFail);
+    }
+
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
         loader.loadAndQueue(query, shuffle, onSuccess, onFail);
     }
@@ -91,8 +95,8 @@ public class GuildMusicManager {
         scheduler.remove(queueId);
     }
 
-    public void jumpToTrack(int index) {
-        scheduler.jumpToTrack(index);
+    public void jumpTo(int index) {
+        scheduler.jumpTo(index);
     }
 
     public void reorder(List<String> newQueueIds) {

@@ -50,6 +50,33 @@ public class TrackLoader {
         scheduler.resume();
     }
 
+    public void playNowById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+        playerManager.loadItemOrdered(this, trackId, new AudioLoadResultHandler() {
+            @Override
+            public void trackLoaded(AudioTrack track) {
+                scheduler.enqueue(track);
+                scheduler.jumpTo(scheduler.getQueue().size() - 1);
+                onSuccess.accept(track);
+            }
+
+            @Override
+            public void playlistLoaded(AudioPlaylist playlist) {
+                onFail.accept("Unexpected playlist for this track: " + trackId);
+            }
+
+            @Override
+            public void noMatches() {
+                onFail.accept("Track not found: " + trackId);
+            }
+
+            @Override
+            public void loadFailed(FriendlyException exception) {
+                onFail.accept("Load failed due to: " + exception.getMessage());
+            }
+        });
+        scheduler.resume();
+    }
+
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
         String lookup = normalizeQuery(query);
 

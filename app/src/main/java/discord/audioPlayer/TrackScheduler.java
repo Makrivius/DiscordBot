@@ -17,7 +17,6 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.lavalink.youtube.AllClientsFailedException;
-import discord.audioPlayer.PlayerStateDTO.TrackDTO;
 
 public class TrackScheduler extends AudioEventAdapter {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
@@ -161,7 +160,7 @@ public class TrackScheduler extends AudioEventAdapter {
         broadcast();
     }
 
-    public void jumpToTrack(int index) {
+    public void jumpTo(int index) {
         if (queue.size() < index || index < 0) {
             log.error("Invalid position: {} for queue, queue length is: {}", index, queue.size());
         }
