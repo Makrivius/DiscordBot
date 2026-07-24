@@ -55,6 +55,10 @@ public class GuildMusicManager {
         loader.search(query, onResults, onFail);
     }
 
+    public boolean isQueueEmpty() {
+        return scheduler.isEmpty();
+    }
+
     public void pause() {
         scheduler.pause();
     }

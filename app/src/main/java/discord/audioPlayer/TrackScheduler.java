@@ -37,6 +37,10 @@ public class TrackScheduler extends AudioEventAdapter {
         return player.getPlayingTrack();
     }
 
+    public boolean isEmpty() {
+        return queue.isEmpty();
+    }
+
     public boolean isPaused() {
         return player.isPaused();
     }
