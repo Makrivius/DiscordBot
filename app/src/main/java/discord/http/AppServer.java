@@ -21,6 +21,7 @@ import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
 import discord.util.JsonUtil;
 import io.javalin.Javalin;
+import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsContext;
@@ -54,15 +55,30 @@ public class AppServer {
                 staticFiles.directory = "/dist";
                 staticFiles.location = io.javalin.http.staticfiles.Location.CLASSPATH;
             });
+
+            config.staticFiles.add(staticFiles -> {
+                staticFiles.hostedPath = "/.proxy";
+                staticFiles.directory = "/dist";
+                staticFiles.location = io.javalin.http.staticfiles.Location.CLASSPATH;
+            });
+
+            config.routes.apiBuilder(() -> {
+                ApiBuilder.before(ctx -> {
+                    ctx.header("Content-Security-Policy",
+                            "frame-ancestors 'self' https://discord.com https://*.discord.com https://*.discordsays.com;");
+                    ctx.header("X-Frame-Options", "ALLOW-FROM https://discord.com");
+                });
+
+                ApiBuilder.post("/api/discord/token", this::handleTokenExchange);
+                ApiBuilder.ws("/ws", ws -> {
+                    ws.onConnect(this::onOpen);
+                    ws.onMessage(this::onMessage);
+                    ws.onClose(this::onClose);
+                    ws.onError(ctx -> log.error("WS error: " + ctx.error()));
+                });
+            });
         });
 
-        app.post("/api/discord/token", this::handleTokenExchange);
-        app.ws("/ws", ws -> {
-            ws.onConnect(this::onOpen);
-            ws.onMessage(this::onMessage);
-            ws.onClose(this::onClose);
-            ws.onError(ctx -> log.error("WS error: " + ctx.error()));
-        });
         app.start(port);
     }
 
@@ -90,7 +106,7 @@ public class AppServer {
     private void onOpen(WsConnectContext ctx) {
         String guildIdParam = ctx.queryParam("guildId");
         if (guildIdParam == null) {
-            ctx.session.close(4000, "Missing guildId");
+            ctx.session.close();
             return;
         }
         long guildId = Long.parseLong(guildIdParam);

@@ -6,18 +6,18 @@ plugins {
 
 // Global Dependency Versions
 object Versions {
-    const val jda = "6.3.0"
-    const val javalin = "6.4.0"
-    const val reflections = "0.10.2"
-    const val slf4j = "2.0.13"
-    const val logbackClassic = "1.5.6"
-    const val javaDotenv = "5.2.2"
-    const val gson = "2.11.0"
-    const val lavaPlayer = "2.2.6"
-    const val lavalinkYoutube = "1.18.0"
-    const val jdaVea = "0.1.5"
-    const val jacksonBom = "2.17.0"
-    const val sqliteJdbc = "3.51.2.0"
+    const val jda = "latest.release"
+    const val javalin = "latest.release"
+    const val reflections = "latest.release"
+    const val slf4j = "latest.release"
+    const val logbackClassic = "latest.release"
+    const val javaDotenv = "latest.release"
+    const val gson = "latest.release"
+    const val lavaPlayer = "latest.release"
+    const val lavalinkYoutube = "latest.release"
+    const val jdaVea = "latest.release"
+    const val jacksonBom = "latest.release"
+    const val sqliteJdbc = "latest.release"
 }
 
 repositories {
