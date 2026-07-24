@@ -40,6 +40,10 @@ public class AppServer {
     private final Map<WsContext, Long> connToGuild = new ConcurrentHashMap<>();
     private final Map<WsContext, java.util.function.Consumer<discord.audioPlayer.PlayerStateDTO>> listeners = new ConcurrentHashMap<>();
 
+    private final Map<WsContext, java.util.concurrent.ScheduledFuture<?>> pingTasks = new ConcurrentHashMap<>();
+    private final java.util.concurrent.ScheduledExecutorService pingScheduler = java.util.concurrent.Executors
+            .newSingleThreadScheduledExecutor();
+
     public AppServer(String clientId, String clientSecret, SessionRegistry sessions, CommandRegistry registry) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
@@ -117,6 +121,17 @@ public class AppServer {
         manager.onStateChange(listener);
 
         ctx.send(gson.toJson(manager.snapshot()));
+
+        var pingTask = pingScheduler.scheduleAtFixedRate(() -> {
+            try {
+                if (ctx.session.isOpen()) {
+                    ctx.session.sendPing(java.nio.ByteBuffer.allocate(0), null);
+                }
+            } catch (Exception e) {
+                log.warn("Ping filed for guild {}", guildId, e);
+            }
+        }, 30, 30, java.util.concurrent.TimeUnit.SECONDS);
+        pingTasks.put(ctx, pingTask);
     }
 
     private void onMessage(WsMessageContext ctx) {
@@ -147,6 +162,9 @@ public class AppServer {
         if (guildId != null && listener != null) {
             sessions.get(guildId).removeListener(listener);
         }
+        var pingTask = pingTasks.remove(ctx);
+        if (pingTask != null)
+            pingTask.cancel(false);
     }
 
 }
