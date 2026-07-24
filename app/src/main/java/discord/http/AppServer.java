@@ -21,7 +21,6 @@ import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
 import discord.util.JsonUtil;
 import io.javalin.Javalin;
-import io.javalin.apibuilder.ApiBuilder;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsContext;
@@ -54,29 +53,25 @@ public class AppServer {
                 staticFiles.hostedPath = "/";
                 staticFiles.directory = "/dist";
                 staticFiles.location = io.javalin.http.staticfiles.Location.CLASSPATH;
+
             });
 
             config.staticFiles.add(staticFiles -> {
                 staticFiles.hostedPath = "/.proxy";
                 staticFiles.directory = "/dist";
                 staticFiles.location = io.javalin.http.staticfiles.Location.CLASSPATH;
+
             });
 
-            config.routes.apiBuilder(() -> {
-                ApiBuilder.before(ctx -> {
-                    ctx.header("Content-Security-Policy",
-                            "frame-ancestors 'self' https://discord.com https://*.discord.com https://*.discordsays.com;");
-                    ctx.header("X-Frame-Options", "ALLOW-FROM https://discord.com");
-                });
+            config.routes.post("/api/discord/token", this::handleTokenExchange);
 
-                ApiBuilder.post("/api/discord/token", this::handleTokenExchange);
-                ApiBuilder.ws("/ws", ws -> {
-                    ws.onConnect(this::onOpen);
-                    ws.onMessage(this::onMessage);
-                    ws.onClose(this::onClose);
-                    ws.onError(ctx -> log.error("WS error: " + ctx.error()));
-                });
+            config.routes.ws("/ws", ws -> {
+                ws.onConnect(this::onOpen);
+                ws.onMessage(this::onMessage);
+                ws.onClose(this::onClose);
+                ws.onError(ctx -> log.error("WS error: " + ctx.error()));
             });
+
         });
 
         app.start(port);
@@ -85,6 +80,9 @@ public class AppServer {
     private void handleTokenExchange(io.javalin.http.Context ctx) throws IOException, InterruptedException {
         JsonObject body = gson.fromJson(ctx.body(), JsonObject.class);
         String code = body.get("code").getAsString();
+
+        String redirectUri = ctx.scheme() + "://" + ctx.host();
+        log.info("Dynamic Redirect URI generated: {}", redirectUri);
 
         String form = "client_id=" + clientId
                 + "&client_secret=" + clientSecret
