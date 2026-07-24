@@ -83,6 +83,18 @@ public class GuildMusicManager {
         scheduler.cycleRepeat();
     }
 
+    public void clearQueue() {
+        scheduler.clearExceptCurrent();
+    }
+
+    public void remove(String queueId) {
+        scheduler.remove(queueId);
+    }
+
+    public void jumpToTrack(int index) {
+        scheduler.jumpToTrack(index);
+    }
+
     public void reorder(List<String> newQueueIds) {
         scheduler.reorder(newQueueIds);
     }

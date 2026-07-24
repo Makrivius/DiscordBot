@@ -17,6 +17,7 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
 import dev.lavalink.youtube.AllClientsFailedException;
+import discord.audioPlayer.PlayerStateDTO.TrackDTO;
 
 public class TrackScheduler extends AudioEventAdapter {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
@@ -121,6 +122,54 @@ public class TrackScheduler extends AudioEventAdapter {
         broadcast();
     }
 
+    public void clearExceptCurrent() {
+        if (queue.isEmpty()) {
+            broadcast();
+            return;
+        }
+
+        AudioTrack current = currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
+
+        queue.clear();
+        if (current != null) {
+            queue.add(current);
+            currentIndex = 0;
+        } else {
+            currentIndex = -1;
+        }
+        broadcast();
+    }
+
+    public void remove(String queueId) {
+        int removeIndex = indexOfQueueId(queueId);
+        if (removeIndex < 0)
+            return;
+
+        boolean removeCurrent = removeIndex == currentIndex;
+
+        queue.remove(removeIndex);
+
+        if (removeCurrent) {
+            currentIndex = removeIndex - 1;
+            advance();
+            return;
+        }
+
+        if (removeIndex < currentIndex) {
+            currentIndex--;
+        }
+        broadcast();
+    }
+
+    public void jumpToTrack(int index) {
+        if (queue.size() < index || index < 0) {
+            log.error("Invalid position: {} for queue, queue length is: {}", index, queue.size());
+        }
+
+        currentIndex = index;
+        playIndex(currentIndex);
+    }
+
     public void reorder(List<String> newQueueIds) {
         Map<String, AudioTrack> byQueueId = queue.stream()
                 .collect(Collectors.toMap(t -> (String) t.getUserData(), t -> t));
@@ -173,6 +222,15 @@ public class TrackScheduler extends AudioEventAdapter {
             managerHolder.refreshYoutubeSource();
             playIndex(currentIndex);
         }
+    }
+
+    private int indexOfQueueId(String queueId) {
+        for (int i = 0; i < queue.size(); i++) {
+            if (Objects.equals(queue.get(i).getUserData(), queueId)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void playIndex(int i) {
