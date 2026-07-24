@@ -43,6 +43,10 @@ public class GuildMusicManager {
         guildAudioManager.setSendingHandler(sendHandler);
     }
 
+    public void enqueueById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+        loader.enqueueById(trackId, onSuccess, onFail);
+    }
+
     public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
         loader.loadAndQueue(query, shuffle, onSuccess, onFail);
     }
