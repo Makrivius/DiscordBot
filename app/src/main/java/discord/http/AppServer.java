@@ -53,6 +53,10 @@ public class AppServer {
 
     public void start(int port) {
         Javalin app = Javalin.create(config -> {
+            config.jetty.modifyWebSocketServletFactory(factory -> {
+                factory.setIdleTimeout(java.time.Duration.ofSeconds(60));
+            });
+
             config.staticFiles.add(staticFiles -> {
                 staticFiles.hostedPath = "/";
                 staticFiles.directory = "/dist";
@@ -75,7 +79,6 @@ public class AppServer {
                 ws.onClose(this::onClose);
                 ws.onError(ctx -> log.error("WS error: " + ctx.error()));
             });
-
         });
 
         app.start(port);
@@ -125,12 +128,13 @@ public class AppServer {
         var pingTask = pingScheduler.scheduleAtFixedRate(() -> {
             try {
                 if (ctx.session.isOpen()) {
-                    ctx.session.sendPing(java.nio.ByteBuffer.allocate(0), null);
+                    ctx.session.sendPing(java.nio.ByteBuffer.allocate(0),
+                            org.eclipse.jetty.websocket.api.Callback.NOOP);
                 }
             } catch (Exception e) {
                 log.warn("Ping filed for guild {}", guildId, e);
             }
-        }, 30, 30, java.util.concurrent.TimeUnit.SECONDS);
+        }, 10, 10, java.util.concurrent.TimeUnit.SECONDS);
         pingTasks.put(ctx, pingTask);
     }
 
@@ -143,8 +147,10 @@ public class AppServer {
         String actionName = json.get("type").getAsString();
         Map<String, String> named = JsonUtil.toStringMap(json, "type");
         Command cmd = registry.get(actionName);
-        if (cmd == null)
+        if (cmd == null) {
+            log.warn("Unknown command received: '{}' (guild {})", actionName, guildId);
             return;
+        }
 
         CommandContext cctx = new CommandContext(guildId, sessions.get(guildId), java.util.List.of(), named, msg -> {
         }, err -> log.error("WS command failed: " + err),
