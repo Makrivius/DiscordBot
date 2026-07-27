@@ -53,7 +53,7 @@ public class App {
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
 
-                AppServer server = new AppServer(config.clientId(), config.secret(), sessions, registry);
+                AppServer server = new AppServer(config.clientId(), config.secret(), sessions, registry, jda);
                 server.start(config.wsPort());
                 log.info("Server started on port {}", config.wsPort());
         }

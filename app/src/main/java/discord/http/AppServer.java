@@ -19,12 +19,14 @@ import discord.commands.CommandContext;
 import discord.commands.CommandRegistry;
 import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
+import discord.guild.VoiceConnector;
 import discord.util.JsonUtil;
 import io.javalin.Javalin;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsConnectContext;
 import io.javalin.websocket.WsContext;
 import io.javalin.websocket.WsMessageContext;
+import net.dv8tion.jda.api.JDA;
 
 public class AppServer {
 
@@ -36,6 +38,8 @@ public class AppServer {
     private final String clientSecret;
     private final SessionRegistry sessions;
     private final CommandRegistry registry;
+    private final JDA jda;
+    private final VoiceConnector voiceConnector;
 
     private final Map<WsContext, Long> connToGuild = new ConcurrentHashMap<>();
     private final Map<WsContext, java.util.function.Consumer<discord.audioPlayer.PlayerStateDTO>> listeners = new ConcurrentHashMap<>();
@@ -44,11 +48,14 @@ public class AppServer {
     private final java.util.concurrent.ScheduledExecutorService pingScheduler = java.util.concurrent.Executors
             .newSingleThreadScheduledExecutor();
 
-    public AppServer(String clientId, String clientSecret, SessionRegistry sessions, CommandRegistry registry) {
+    public AppServer(String clientId, String clientSecret, SessionRegistry sessions, CommandRegistry registry,
+            JDA jda) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.sessions = sessions;
         this.registry = registry;
+        this.jda = jda;
+        this.voiceConnector = new VoiceConnector(sessions);
     }
 
     public void start(int port) {
@@ -110,6 +117,7 @@ public class AppServer {
 
     private void onOpen(WsConnectContext ctx) {
         String guildIdParam = ctx.queryParam("guildId");
+        String userIdParam = ctx.queryParam("userId");
         if (guildIdParam == null) {
             ctx.session.close();
             return;
@@ -122,6 +130,23 @@ public class AppServer {
                 .send(gson.toJson(state));
         listeners.put(ctx, listener);
         manager.onStateChange(listener);
+
+        if (userIdParam != null) {
+            try {
+                long userId = Long.parseLong(userIdParam);
+                var guild = jda.getGuildById(guildId);
+                if (guild != null) {
+                    boolean connected = voiceConnector.ensureConnected(guild, userId);
+                    if (!connected) {
+                        log.warn("Activity user {} isn't in a voice channel in guild {}", userId, guildId);
+                    }
+                } else {
+                    log.warn("Could not resolve guild {} for activity connect", userIdParam);
+                }
+            } catch (Exception e) {
+                log.warn("Invalid userId param on activity connect: {}", userIdParam);
+            }
+        }
 
         ctx.send(gson.toJson(manager.snapshot()));
 
