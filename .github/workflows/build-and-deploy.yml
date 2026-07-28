@@ -19,7 +19,7 @@ jobs:
       - name: Checkout frontend repo
         uses: actions/checkout@v4
         with:
-          repository: https://github.com/Makrivius/Ds-bot-UI
+          repository: Makrivius/Ds-bot-UI
           path: frontend
           token: ${{ secrets.CROSS_REPO_PAT }}   # needed if frontend repo is private
 
