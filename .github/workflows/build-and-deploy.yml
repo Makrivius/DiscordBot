@@ -54,11 +54,11 @@ jobs:
         run: ./gradlew shadowJar --no-daemon
 
       - name: Upload jar via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        uses: Dylan700/sftp-upload-action@v1.2.4
         with:
-          username: ${{ secrets.SFTP_USER }}
           server: ${{ secrets.SFTP_HOST }}
           port: ${{ secrets.SFTP_PORT }}
+          username: ${{ secrets.SFTP_USER }}
           password: ${{ secrets.SFTP_PASSWORD }}
-          local_path: 'backend/app/build/libs/*-all.jar'
-          remote_path: '/'
+          uploads: |
+            backend/app/build/libs/ => /
