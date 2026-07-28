@@ -30,7 +30,13 @@ public class AudioPlayerManagerHolder {
     public AudioPlayerManagerHolder(String refreshToken) {
         playerManager = new DefaultAudioPlayerManager();
 
-        this.yt = new YoutubeAudioSourceManager();
+        this.yt = new YoutubeAudioSourceManager(true,
+                new dev.lavalink.youtube.clients.skeleton.Client[] {
+                        new dev.lavalink.youtube.clients.Music(),
+                        new dev.lavalink.youtube.clients.Web(),
+                        new dev.lavalink.youtube.clients.Android(),
+                        new dev.lavalink.youtube.clients.Tv()
+                });
         playerManager.registerSourceManager(yt);
 
         checkOauth(refreshToken);
