@@ -28,7 +28,7 @@ public class App {
                 BotConfig config = BotConfig.load();
                 log.info("Config loaded ");
 
-                AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder();
+                AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder(config.youtubeRefreshToken());
                 SessionRegistry sessions = new SessionRegistry(audioHolder);
 
                 CommandRegistry registry = new CommandRegistry(config.defaultPrefix());

@@ -22,7 +22,6 @@ public class TrackScheduler extends AudioEventAdapter {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
 
     private final AudioPlayer player;
-    private final AudioPlayerManagerHolder managerHolder;
     private final List<AudioTrack> queue = new ArrayList<>();
     private boolean shuffle = false;
     private String repeatMode = "off";
@@ -59,7 +58,6 @@ public class TrackScheduler extends AudioEventAdapter {
 
     public TrackScheduler(AudioPlayer player, AudioPlayerManagerHolder managerHolder) {
         this.player = player;
-        this.managerHolder = managerHolder;
     }
 
     public void SetBroadcastHook(Runnable callback) {
@@ -218,8 +216,6 @@ public class TrackScheduler extends AudioEventAdapter {
         Throwable cause = exception.getCause();
         if (cause instanceof AllClientsFailedException) {
             log.error("All YT clients are failed to load, hard refresh");
-            managerHolder.refreshYoutubeSource();
-            playIndex(currentIndex);
         }
     }
 

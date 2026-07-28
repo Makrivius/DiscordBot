@@ -19,11 +19,21 @@ public class AudioPlayerManagerHolder {
     private final AudioPlayerManager playerManager;
     private YoutubeAudioSourceManager yt;
 
-    public AudioPlayerManagerHolder() {
+    private void checkOauth(String refreshToken) {
+        if (!refreshToken.isEmpty() && !refreshToken.isBlank()) {
+            this.yt.useOauth2(refreshToken, true);
+        } else {
+            this.yt.useOauth2(refreshToken, false);
+        }
+    }
+
+    public AudioPlayerManagerHolder(String refreshToken) {
         playerManager = new DefaultAudioPlayerManager();
 
         this.yt = new YoutubeAudioSourceManager();
         playerManager.registerSourceManager(yt);
+
+        checkOauth(refreshToken);
 
         AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
@@ -31,28 +41,6 @@ public class AudioPlayerManagerHolder {
 
     public AudioPlayerManager get() {
         return playerManager;
-    }
-
-    public synchronized void refreshYoutubeSource() {
-        try {
-            log.info("Starting refresh of YouTube source manager...");
-            debugPrintSources();
-
-            Field fields = DefaultAudioPlayerManager.class.getDeclaredField("sourceManagers");
-            fields.setAccessible(true);
-
-            @SuppressWarnings("unchecked")
-            List<AudioSourceManager> sources = (List<AudioSourceManager>) fields.get(this.playerManager);
-            sources.removeIf(source -> source instanceof dev.lavalink.youtube.YoutubeAudioSourceManager);
-
-            this.yt = new dev.lavalink.youtube.YoutubeAudioSourceManager();
-            sources.add(0, this.yt);
-
-            log.info("YouTube source manager forcefully refreshed successfully.");
-            debugPrintSources();
-        } catch (Exception e) {
-            log.error("Failed to refresh YouTube source manager", e);
-        }
     }
 
     public void debugPrintSources() {

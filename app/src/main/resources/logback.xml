@@ -12,22 +12,20 @@
 
     <!-- Single Continuous File Logging Configuration -->
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <!-- Kept as a single file name so all sessions log into the same file -->
         <file>logs/bot.log</file>
-        
         <append>true</append> 
-
-        <encoder>
-            <!-- Added %n%n at the beginning of the header to create two blank lines before the text -->
-            <!-- Fixed the typo: changed /n to %n for proper system line breaks -->
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
-            <header>%n%n============ BOT STARTUP: ${byCurrentStartup} ============%n</header>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+                <fileHeader>%n%n============ BOT STARTUP: ${byCurrentStartup} ============%n</fileHeader>
+            </layout>
         </encoder>
     </appender>
 
     <!-- Quiet down noisy libraries -->
     <logger name="net.dv8tion.jda" level="WARN"/>
     <logger name="com.sedmelluq.discord.lavaplayer" level="WARN"/>
+    <logger name="dev.lavalink.youtube.http.YoutubeOauth2Handler" level="INFO"/>
 
     <!-- Root Logging Rule -->
     <root level="INFO">
