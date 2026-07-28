@@ -2,7 +2,6 @@ package discord.audioPlayer;
 
 import java.lang.reflect.Field;
 import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,6 +11,7 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
+import dev.lavalink.youtube.clients.ClientOptions;
 
 public class AudioPlayerManagerHolder {
     private final Logger log = LoggerFactory.getLogger(AudioPlayerManagerHolder.class);
@@ -30,11 +30,15 @@ public class AudioPlayerManagerHolder {
     public AudioPlayerManagerHolder(String refreshToken) {
         playerManager = new DefaultAudioPlayerManager();
 
+        ClientOptions searchOnly = new ClientOptions();
+        searchOnly.setPlayback(false);
+
         this.yt = new YoutubeAudioSourceManager(true,
                 new dev.lavalink.youtube.clients.skeleton.Client[] {
+                        new dev.lavalink.youtube.clients.Web(searchOnly),
+                        new dev.lavalink.youtube.clients.Music(searchOnly),
+                        new dev.lavalink.youtube.clients.AndroidMusic(searchOnly),
                         new dev.lavalink.youtube.clients.Tv(),
-                        new dev.lavalink.youtube.clients.Music(),
-                        new dev.lavalink.youtube.clients.AndroidMusic(),
                 });
         playerManager.registerSourceManager(yt);
         checkOauth(refreshToken);
