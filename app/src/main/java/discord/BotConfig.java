@@ -13,7 +13,11 @@ public record BotConfig(String token, String clientId, String secret, String def
         String secret = require(dotenv.get("DISCORD_CLIENT_SECRET"), "DISCORD_CLIENT_SECRET");
 
         String defaultPrefix = dotenv.get("PREFIX", "!");
-        int wsPort = Integer.parseInt(dotenv.get("WS_PORT", "8080"));
+        String serverPortEnv = System.getenv("SERVER_PORT");
+        int wsPort = serverPortEnv != null
+                ? Integer.parseInt(serverPortEnv)
+                : Integer.parseInt(dotenv.get("WS_PORT", "8080"));
+        Integer.parseInt(dotenv.get("WS_PORT", "8080"));
         String dbPath = dotenv.get("DB_PATH", "bot.db");
 
         return new BotConfig(token, clientId, secret, defaultPrefix, wsPort, dbPath);
