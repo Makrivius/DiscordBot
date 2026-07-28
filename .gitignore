@@ -10,7 +10,10 @@ build
 .env
 # Ignore database file
 bot.db
-app/src/main/resources
+
+app/src/main/resources/*
+!app/src/main/resources/logback.xml
+
 app/bin/main/schema.sql
 
 
