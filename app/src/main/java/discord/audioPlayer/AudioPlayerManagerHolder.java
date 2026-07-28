@@ -39,7 +39,6 @@ public class AudioPlayerManagerHolder {
         playerManager.registerSourceManager(yt);
         checkOauth(refreshToken);
 
-        AudioSourceManagers.registerRemoteSources(playerManager);
         AudioSourceManagers.registerLocalSource(playerManager);
     }
 
