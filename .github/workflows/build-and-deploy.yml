@@ -55,6 +55,6 @@ jobs:
           username: ${{ secrets.SFTP_USER }}
           server: ${{ secrets.SFTP_HOST }}
           port: ${{ secrets.SFTP_PORT }}
-          ssh_private_key: ${{ secrets.SFTP_PRIVATE_KEY }}
+          ssh_private_key: ${{ secrets.SFTP_PASSWORD }}
           local_path: 'backend/app/build/libs/*-all.jar'
           remote_path: '/'
