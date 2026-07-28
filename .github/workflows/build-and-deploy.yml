@@ -1,0 +1,60 @@
+name: Build and Deploy Bot Jar
+
+on:
+  push:
+    branches: [main]
+  repository_dispatch:
+    types: [frontend-updated]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout backend repo
+        uses: actions/checkout@v4
+        with:
+          path: backend
+
+      - name: Checkout frontend repo
+        uses: actions/checkout@v4
+        with:
+          repository: YOUR_USER/YOUR_FRONTEND_REPO
+          path: frontend
+          token: ${{ secrets.CROSS_REPO_PAT }}   # needed if frontend repo is private
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install & build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy frontend build into backend resources
+        run: |
+          mkdir -p backend/app/src/main/resources/dist
+          cp -r frontend/dist/* backend/app/src/main/resources/dist/
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Build shadow jar
+        working-directory: backend
+        run: ./gradlew shadowJar --no-daemon
+
+      - name: Upload jar via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.SFTP_USER }}
+          server: ${{ secrets.SFTP_HOST }}
+          port: ${{ secrets.SFTP_PORT }}
+          ssh_private_key: ${{ secrets.SFTP_PRIVATE_KEY }}
+          local_path: 'backend/app/build/libs/*-all.jar'
+          remote_path: '/'
