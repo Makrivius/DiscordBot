@@ -45,6 +45,10 @@ jobs:
           distribution: temurin
           java-version: '25'
 
+      - name: Elevate gradlew jar
+        working-directory: backend
+        run: chmod +x ./gradlew
+
       - name: Build shadow jar
         working-directory: backend
         run: ./gradlew shadowJar --no-daemon
