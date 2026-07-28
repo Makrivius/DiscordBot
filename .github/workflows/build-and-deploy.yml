@@ -53,6 +53,9 @@ jobs:
         working-directory: backend
         run: ./gradlew shadowJar --no-daemon
 
+      - name: List build output (debug)
+        run: find backend/app/build/libs -type f -name "*.jar" -exec ls -la {} \;
+
       - name: Upload jar via SFTP
         uses: Dylan700/sftp-upload-action@v1.2.4
         with:
