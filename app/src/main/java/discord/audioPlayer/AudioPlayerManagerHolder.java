@@ -11,7 +11,6 @@ import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
 
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import dev.lavalink.youtube.clients.ClientOptions;
 
 public class AudioPlayerManagerHolder {
     private final Logger log = LoggerFactory.getLogger(AudioPlayerManagerHolder.class);
@@ -19,29 +18,11 @@ public class AudioPlayerManagerHolder {
     private final AudioPlayerManager playerManager;
     private YoutubeAudioSourceManager yt;
 
-    private void checkOauth(String refreshToken) {
-        if (!refreshToken.isEmpty() && !refreshToken.isBlank()) {
-            this.yt.useOauth2(refreshToken, true);
-        } else {
-            this.yt.useOauth2(refreshToken, false);
-        }
-    }
-
     public AudioPlayerManagerHolder(String refreshToken) {
         playerManager = new DefaultAudioPlayerManager();
 
-        ClientOptions searchOnly = new ClientOptions();
-        searchOnly.setPlayback(false);
-
-        this.yt = new YoutubeAudioSourceManager(true,
-                new dev.lavalink.youtube.clients.skeleton.Client[] {
-                        new dev.lavalink.youtube.clients.Web(searchOnly),
-                        new dev.lavalink.youtube.clients.Music(searchOnly),
-                        new dev.lavalink.youtube.clients.AndroidMusic(searchOnly),
-                        new dev.lavalink.youtube.clients.Tv(),
-                });
+        this.yt = new YoutubeAudioSourceManager();
         playerManager.registerSourceManager(yt);
-        checkOauth(refreshToken);
 
         AudioSourceManagers.registerLocalSource(playerManager);
     }

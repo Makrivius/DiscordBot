@@ -14,7 +14,7 @@ object Versions {
     const val javaDotenv = "latest.release"
     const val gson = "latest.release"
     const val lavaPlayer = "latest.release"
-    const val lavalinkYoutube = "latest.release"
+    const val lavalinkYoutube = "1.18.1"
     const val jdaVea = "latest.release"
     const val jacksonBom = "latest.release"
     const val sqliteJdbc = "latest.release"
