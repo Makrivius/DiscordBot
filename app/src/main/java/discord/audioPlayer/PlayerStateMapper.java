@@ -1,18 +1,17 @@
 package discord.audioPlayer;
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-
+import dev.arbjerg.lavalink.client.player.Track;
+import dev.arbjerg.lavalink.protocol.v4.TrackInfo;
 import discord.util.ThumbnailUtil;
 
 public class PlayerStateMapper {
     public static PlayerStateDTO toDto(TrackScheduler scheduler, String channelName) {
         var trackDtos = scheduler.getQueue().stream().map(PlayerStateMapper::toTrackDto).toList();
-        AudioTrack current = scheduler.getCurrentTrack();
+        Track current = scheduler.getCurrentTrack();
         return new PlayerStateDTO(
                 "state",
                 channelName,
-                current != null ? current.getPosition() : 0,
+                current != null ? scheduler.getCurrentPosition() : 0L,
                 scheduler.isPaused(),
                 scheduler.isShuffle(),
                 scheduler.getRepeatMode(),
@@ -20,10 +19,12 @@ public class PlayerStateMapper {
                 scheduler.getCurrentIndex());
     }
 
-    private static PlayerStateDTO.TrackDTO toTrackDto(AudioTrack track) {
-        AudioTrackInfo info = track.getInfo();
-        String queueId = (String) track.getUserData();
-        return new PlayerStateDTO.TrackDTO(track.getIdentifier(), queueId, info.title, info.author, info.length,
-                ThumbnailUtil.getThumbnails(track.getIdentifier()));
+    private static PlayerStateDTO.TrackDTO toTrackDto(Track track) {
+        TrackInfo info = track.getInfo();
+        java.util.Map<?, ?> userData = track.getUserData(java.util.Map.class);
+        String queueId = String.valueOf(userData.get("queueId"));
+        return new PlayerStateDTO.TrackDTO(info.getIdentifier(), queueId, info.getTitle(), info.getAuthor(),
+                info.getLength(),
+                ThumbnailUtil.getThumbnails(info.getIdentifier()));
     }
 }

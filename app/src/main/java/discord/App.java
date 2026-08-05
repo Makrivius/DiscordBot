@@ -6,7 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
+import dev.arbjerg.lavalink.client.LavalinkClient;
+import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
 import discord.audioPlayer.AudioPlayerManagerHolder;
+import discord.audioPlayer.nodes.NodeHealthChecker;
 import discord.commands.CommandRegistry;
 import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
@@ -28,8 +31,12 @@ public class App {
                 BotConfig config = BotConfig.load();
                 log.info("Config loaded ");
 
-                AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder(config.youtubeRefreshToken());
+                AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder(config.token());
                 SessionRegistry sessions = new SessionRegistry(audioHolder);
+
+                // YOOOOOOOOOOOOOOOOOOOOOOOO
+                LavalinkClient lavalinkClient = audioHolder.getAudioPlayerManager();
+                new NodeHealthChecker().registerAndWatch(lavalinkClient);
 
                 CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
                 registry.provide(sessions);
@@ -48,6 +55,7 @@ public class App {
                                 .createDefault(config.token())
                                 .enableIntents(gatewayIntents)
                                 .addEventListeners(new DiscordListener(dispatcher))
+                                .setVoiceDispatchInterceptor(new JDAVoiceUpdateListener(lavalinkClient))
                                 .setAudioModuleConfig(new AudioModuleConfig()
                                                 .withDaveSessionFactory(new JDaveSessionFactory()))
                                 .build().awaitReady();

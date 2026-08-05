@@ -16,7 +16,7 @@ public class EnqueueCommand implements Command {
             ctx.error("Missing trackId");
             return;
         }
-        ctx.musicManager().enqueueById(trackId, track -> ctx.reply("Queued: **" + track.getInfo().title + "**"),
+        ctx.musicManager().enqueueById(trackId, track -> ctx.reply("Queued: **" + track.getInfo().getTitle() + "**"),
                 error -> ctx.error(error));
     }
 }

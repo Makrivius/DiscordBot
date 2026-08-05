@@ -4,54 +4,52 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import dev.arbjerg.lavalink.client.LavalinkClient;
+import dev.arbjerg.lavalink.client.Link;
+import dev.arbjerg.lavalink.client.player.Track;
 import discord.audioPlayer.AudioPlayerManagerHolder;
-import discord.audioPlayer.AudioPlayerSendHandler;
 import discord.audioPlayer.PlayerStateDTO;
 import discord.audioPlayer.PlayerStateMapper;
 import discord.audioPlayer.TrackLoader;
 import discord.audioPlayer.TrackScheduler;
-import net.dv8tion.jda.api.managers.AudioManager;
 
 public class GuildMusicManager {
-    private final AudioPlayerManager playerManager;
-    private final AudioPlayer player;
+    private final AudioPlayerManager searchManager;
+    private final LavalinkClient lavalinkClient;
+    private final Link link;
     private final TrackLoader loader;
     private final TrackScheduler scheduler;
-    private final AudioPlayerSendHandler sendHandler;
     private final List<Consumer<PlayerStateDTO>> listeners = new CopyOnWriteArrayList<>();
 
     private String channelName;
 
-    public GuildMusicManager(AudioPlayerManagerHolder managerHolder) {
-        playerManager = managerHolder.get();
+    public GuildMusicManager(long guildId, AudioPlayerManagerHolder managerHolder) {
+        searchManager = managerHolder.getSearchPlayerManager();
+        lavalinkClient = managerHolder.getAudioPlayerManager();
+        link = lavalinkClient.getOrCreateLink(guildId);
 
-        player = playerManager.createPlayer();
-        scheduler = new TrackScheduler(player, managerHolder);
-        loader = new TrackLoader(playerManager, scheduler);
-        sendHandler = new AudioPlayerSendHandler(player);
+        scheduler = new TrackScheduler(link, lavalinkClient);
+        loader = new TrackLoader(searchManager, link, scheduler);
 
-        player.addListener(scheduler);
         scheduler.SetBroadcastHook(() -> notifyListeners(snapshot()));
     }
 
-    public void connect(AudioManager guildAudioManager, String channelName) {
+    public void setChannelName(String channelName) {
         this.channelName = channelName;
-        guildAudioManager.setSendingHandler(sendHandler);
     }
 
-    public void enqueueById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+    public void enqueueById(String trackId, Consumer<Track> onSuccess, Consumer<String> onFail) {
         loader.enqueueById(trackId, onSuccess, onFail);
     }
 
-    public void playNowById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+    public void playNowById(String trackId, Consumer<Track> onSuccess, Consumer<String> onFail) {
         loader.playNowById(trackId, onSuccess, onFail);
     }
 
-    public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+    public void loadAndQueue(String query, boolean shuffle, Consumer<Track> onSuccess, Consumer<String> onFail) {
         loader.loadAndQueue(query, shuffle, onSuccess, onFail);
     }
 

@@ -4,36 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
-import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackEndReason;
-import dev.lavalink.youtube.AllClientsFailedException;
+import com.fasterxml.jackson.databind.JsonNode;
 
-public class TrackScheduler extends AudioEventAdapter {
+import dev.arbjerg.lavalink.client.LavalinkClient;
+import dev.arbjerg.lavalink.client.Link;
+import dev.arbjerg.lavalink.client.event.TrackEndEvent;
+import dev.arbjerg.lavalink.client.player.Track;
+
+public class TrackScheduler {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
 
-    private final AudioPlayer player;
-    private final List<AudioTrack> queue = new ArrayList<>();
+    private final Link link;
+    private final List<Track> queue = new ArrayList<>();
     private boolean shuffle = false;
     private String repeatMode = "off";
     private int currentIndex = -1;
     private Runnable onStateChange;
 
-    public List<AudioTrack> getQueue() {
+    public List<Track> getQueue() {
         return List.copyOf(queue);
     }
 
-    public AudioTrack getCurrentTrack() {
-        return player.getPlayingTrack();
+    public Track getCurrentTrack() {
+        var player = link.getCachedPlayer();
+        return player != null ? player.getTrack() : null;
+    }
+
+    public long getCurrentPosition() {
+        var player = link.getCachedPlayer();
+        return player != null ? player.getPosition() : 0L;
     }
 
     public boolean isEmpty() {
@@ -41,7 +45,8 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public boolean isPaused() {
-        return player.isPaused();
+        var player = link.getCachedPlayer();
+        return player != null && Boolean.TRUE.equals(player.getPaused());
     }
 
     public boolean isShuffle() {
@@ -56,45 +61,49 @@ public class TrackScheduler extends AudioEventAdapter {
         return currentIndex;
     }
 
-    public TrackScheduler(AudioPlayer player, AudioPlayerManagerHolder managerHolder) {
-        this.player = player;
+    public TrackScheduler(Link link, LavalinkClient lavalinkClient) {
+        this.link = link;
+        lavalinkClient.on(TrackEndEvent.class).filter(event -> event.getGuildId() == link.getGuildId())
+                .subscribe(this::onTrackEnd);
     }
 
     public void SetBroadcastHook(Runnable callback) {
         this.onStateChange = callback;
     }
 
-    public void enqueue(AudioTrack track) {
-        track.setUserData(java.util.UUID.randomUUID().toString());
+    public void enqueue(Track track) {
+        String queueId = java.util.UUID.randomUUID().toString();
+        track.setUserData(java.util.Map.of("queueId", queueId));
         queue.add(track);
-        if (player.getPlayingTrack() == null)
+        if (getCurrentTrack() == null)
             playIndex(queue.size() - 1);
         else
             broadcast();
     }
 
     public void pause() {
-        player.setPaused(true);
-        broadcast();
+        link.createOrUpdatePlayer().setPaused(true)
+                .subscribe(p -> broadcast(), err -> log.error("Failed to pause", err));
     }
 
     public void resume() {
-        player.setPaused(false);
-        broadcast();
+        link.createOrUpdatePlayer().setPaused(false)
+                .subscribe(p -> broadcast(), err -> log.error("Failed to resume", err));
     }
 
     public void previous() {
-        AudioTrack current = player.getPlayingTrack();
-        if (current != null && current.getPosition() >= 3000) {
-            current.setPosition(0);
-            CompletableFuture.delayedExecutor(150, TimeUnit.MILLISECONDS).execute(this::broadcast);
+        var player = link.getCachedPlayer();
+        Long position = player != null ? player.getPosition() : null;
+        if (position != null && position >= 3000) {
+            link.createOrUpdatePlayer().setPosition(0L)
+                    .subscribe(p -> broadcast(), err -> log.error("Failed to seek", err));
             return;
         }
 
         if (queue.isEmpty())
             return;
 
-        int prevIndex = player.getPlayingTrack() == null ? currentIndex : currentIndex - 1;
+        int prevIndex = getCurrentTrack() == null ? currentIndex : currentIndex - 1;
         if (prevIndex < 0)
             prevIndex = 0;
 
@@ -125,7 +134,7 @@ public class TrackScheduler extends AudioEventAdapter {
             return;
         }
 
-        AudioTrack current = currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
+        Track current = currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
 
         queue.clear();
         if (current != null) {
@@ -168,61 +177,38 @@ public class TrackScheduler extends AudioEventAdapter {
     }
 
     public void reorder(List<String> newQueueIds) {
-        Map<String, AudioTrack> byQueueId = queue.stream()
-                .collect(Collectors.toMap(t -> (String) t.getUserData(), t -> t));
+        Map<String, Track> byQueueId = queue.stream()
+                .collect(Collectors.toMap(t -> t.getUserData().toString(), t -> t));
 
-        String currentQueueId = currentIndex >= 0 ? (String) queue.get(currentIndex).getUserData() : null;
+        String currentQueueId = currentIndex >= 0 ? queue.get(currentIndex).getUserData().toString() : null;
 
-        List<AudioTrack> reordered = newQueueIds.stream().map(byQueueId::get).filter(Objects::nonNull).toList();
+        List<Track> reordered = newQueueIds.stream().map(byQueueId::get).filter(Objects::nonNull).toList();
 
         queue.clear();
         queue.addAll(reordered);
 
         if (currentQueueId != null) {
-            currentIndex = queue.stream().map(t -> (String) t.getUserData()).toList().indexOf(currentQueueId);
+            currentIndex = queue.stream().map(t -> t.getUserData().toString()).toList().indexOf(currentQueueId);
         }
         broadcast();
     }
 
     public void seek(long positionMs) {
-        if (player.getPlayingTrack() != null) {
-            player.getPlayingTrack().setPosition(positionMs);
-            CompletableFuture.delayedExecutor(150, TimeUnit.MILLISECONDS).execute(this::broadcast);
-        }
-    }
-
-    @Override
-    public void onTrackStart(AudioPlayer player, AudioTrack track) {
-        CompletableFuture.delayedExecutor(3100, TimeUnit.MILLISECONDS).execute(this::broadcast);
-    }
-
-    @Override
-    public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason reason) {
-        log.info("Track ended: {} | reason: {} | mayStartNext: {} | currentIndex: {}",
-                track.getInfo().title, reason, reason.mayStartNext, currentIndex);
-        if (!reason.mayStartNext)
-            return;
-
-        if (repeatMode.equals("track")) {
-            playIndex(currentIndex);
-            return;
-        }
-
-        advance();
-    }
-
-    @Override
-    public void onTrackException(AudioPlayer player, AudioTrack track, FriendlyException exception) {
-        Throwable cause = exception.getCause();
-        if (cause instanceof AllClientsFailedException) {
-            log.error("All YT clients are failed to load, hard refresh");
+        Track current = link.getCachedPlayer() != null ? link.getCachedPlayer().getTrack() : null;
+        if (current != null) {
+            link.createOrUpdatePlayer().setPosition(positionMs)
+                    .subscribe(p -> broadcast(), err -> log.error("Failed to seek", err));
         }
     }
 
     private int indexOfQueueId(String queueId) {
         for (int i = 0; i < queue.size(); i++) {
-            if (Objects.equals(queue.get(i).getUserData(), queueId)) {
-                return i;
+            JsonNode data = queue.get(i).getUserData();
+            if (data != null && data.has("queueId")) {
+                String storedId = data.get("queueId").asText();
+                if (queueId.equals(storedId)) {
+                    return i;
+                }
             }
         }
         return -1;
@@ -232,10 +218,10 @@ public class TrackScheduler extends AudioEventAdapter {
         if (i < 0 || i >= queue.size())
             return;
         currentIndex = i;
-        AudioTrack retriedTrack = queue.get(i).makeClone();
+        Track retriedTrack = queue.get(i).makeClone();
         retriedTrack.setUserData(queue.get(i).getUserData());
-        player.playTrack(retriedTrack);
-        broadcast();
+        link.createOrUpdatePlayer().setTrack(retriedTrack).subscribe(player -> broadcast(),
+                err -> log.error("Failed to play track", err));
     }
 
     private void advance() {
@@ -245,8 +231,8 @@ public class TrackScheduler extends AudioEventAdapter {
                 playIndex(0);
             } else {
                 currentIndex = -1;
-                player.setPaused(true);
-                broadcast();
+                link.createOrUpdatePlayer().setPaused(true).subscribe(player -> broadcast(),
+                        err -> log.error("Failed to pause", err));
             }
             return;
         }
@@ -256,5 +242,16 @@ public class TrackScheduler extends AudioEventAdapter {
     private void broadcast() {
         if (onStateChange != null)
             onStateChange.run();
+    }
+
+    private void onTrackEnd(TrackEndEvent event) {
+        if (!event.getEndReason().getMayStartNext()) {
+            return;
+        }
+        if (repeatMode.equals("track")) {
+            playIndex(currentIndex);
+            return;
+        }
+        advance();
     }
 }

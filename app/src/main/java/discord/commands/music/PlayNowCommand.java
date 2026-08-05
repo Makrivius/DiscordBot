@@ -16,7 +16,8 @@ public class PlayNowCommand implements Command {
             ctx.error("Missing trackId");
             return;
         }
-        ctx.musicManager().playNowById(trackId, track -> ctx.reply("Playing now: **" + track.getInfo().title + "**"),
+        ctx.musicManager().playNowById(trackId,
+                track -> ctx.reply("Playing now: **" + track.getInfo().getTitle() + "**"),
                 error -> ctx.error(error));
     }
 }

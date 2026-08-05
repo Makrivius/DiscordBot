@@ -7,28 +7,39 @@ import org.slf4j.LoggerFactory;
 
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManager;
-import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-
+import dev.arbjerg.lavalink.client.Helpers;
+import dev.arbjerg.lavalink.client.LavalinkClient;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
 
 public class AudioPlayerManagerHolder {
     private final Logger log = LoggerFactory.getLogger(AudioPlayerManagerHolder.class);
 
-    private final AudioPlayerManager playerManager;
-    private YoutubeAudioSourceManager yt;
+    private final AudioPlayerManager searchPlayerManager;
+    private final LavalinkClient lavalinkClient;
 
-    public AudioPlayerManagerHolder(String refreshToken) {
-        playerManager = new DefaultAudioPlayerManager();
-
-        this.yt = new YoutubeAudioSourceManager();
-        playerManager.registerSourceManager(yt);
-
-        AudioSourceManagers.registerLocalSource(playerManager);
+    public AudioPlayerManagerHolder(String botToken) {
+        searchPlayerManager = createPlayerManager();
+        lavalinkClient = createLavalinkClient(botToken);
     }
 
-    public AudioPlayerManager get() {
-        return playerManager;
+    private AudioPlayerManager createPlayerManager() {
+        DefaultAudioPlayerManager searchPlayerManager = new DefaultAudioPlayerManager();
+        YoutubeAudioSourceManager yt = new YoutubeAudioSourceManager();
+        searchPlayerManager.registerSourceManager(yt);
+        return searchPlayerManager;
+    }
+
+    private LavalinkClient createLavalinkClient(String botToken) {
+        LavalinkClient lavalinkClient = new LavalinkClient(Helpers.getUserIdFromToken(botToken));
+        return lavalinkClient;
+    }
+
+    public LavalinkClient getAudioPlayerManager() {
+        return lavalinkClient;
+    }
+
+    public AudioPlayerManager getSearchPlayerManager() {
+        return searchPlayerManager;
     }
 
     public void debugPrintSources() {
@@ -37,10 +48,10 @@ public class AudioPlayerManagerHolder {
             fields.setAccessible(true);
 
             @SuppressWarnings("unchecked")
-            List<AudioSourceManager> sources = (List<AudioSourceManager>) fields.get(this.playerManager);
+            List<LavalinkClient> sources = (List<LavalinkClient>) fields.get(this.lavalinkClient);
 
             log.info("Current registered sources count: {}", sources.size());
-            AudioSourceManager src = sources.getFirst();
+            LavalinkClient src = sources.getFirst();
             log.info("[{}] {} (Instance ID: {})",
                     0, src.getClass().getName(), Integer.toHexString(System.identityHashCode(src)));
         } catch (Exception e) {

@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
-import net.dv8tion.jda.api.managers.AudioManager;
 
 public class VoiceConnector {
     private static final Logger log = LoggerFactory.getLogger(VoiceConnector.class);
@@ -26,10 +25,6 @@ public class VoiceConnector {
      *         channel.
      */
     public boolean ensureConnected(Guild guild, long memberId) {
-        AudioManager audioManager = guild.getAudioManager();
-        if (audioManager.isConnected())
-            return true;
-
         Member member = guild.getMemberById(memberId);
         if (member == null) {
             log.warn("Could not resolve member {} in guild {}", memberId, guild.getIdLong());
@@ -46,11 +41,11 @@ public class VoiceConnector {
             log.error("Cannot get audioChannel info!");
             return false;
         }
-        GuildMusicManager manager = sessions.get(guild.getIdLong());
-        manager.connect(audioManager, audioChannel.getName());
 
-        if (audioChannel != null)
-            audioManager.openAudioConnection(audioChannel);
+        GuildMusicManager manager = sessions.get(guild.getIdLong());
+        manager.setChannelName(audioChannel.getName());
+
+        guild.getJDA().getDirectAudioController().connect(audioChannel);
         return true;
     }
 }

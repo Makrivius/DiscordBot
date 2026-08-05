@@ -13,8 +13,10 @@ object Versions {
     const val logbackClassic = "latest.release"
     const val javaDotenv = "latest.release"
     const val gson = "latest.release"
+    const val lavaLink = "latest.release"
     const val lavaPlayer = "latest.release"
-    const val lavalinkYoutube = "1.18.1"
+    const val lavalinkYoutube = "latest.release"
+    const val lavaSrc = "latest.release"
     const val jdaVea = "latest.release"
     const val jacksonBom = "latest.release"
     const val sqliteJdbc = "latest.release"
@@ -23,6 +25,7 @@ object Versions {
 repositories {
     mavenCentral()
     maven("https://maven.lavalink.dev/releases")
+    maven("https://maven.topi.wtf/releases")
 }
 
 dependencies {
@@ -35,9 +38,11 @@ dependencies {
     implementation("io.javalin:javalin:${Versions.javalin}")
 
     // Audio Player & Plugins
+    implementation("dev.arbjerg:lavalink-client:${Versions.lavaLink}")
     implementation("dev.arbjerg:lavaplayer:${Versions.lavaPlayer}")
     implementation("dev.lavalink.youtube:common:${Versions.lavalinkYoutube}")
-
+    implementation("com.github.topi314.lavasrc:lavasrc:${Versions.lavaSrc}")
+    implementation("com.github.topi314.lavasrc:protocol-jvm:${Versions.lavaSrc}")
     // Reflection & Utilities
     implementation("org.reflections:reflections:${Versions.reflections}")
     implementation("io.github.cdimascio:java-dotenv:${Versions.javaDotenv}")

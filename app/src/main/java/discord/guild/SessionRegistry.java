@@ -14,6 +14,6 @@ public class SessionRegistry {
     }
 
     public GuildMusicManager get(long guildId) {
-        return sessions.computeIfAbsent(guildId, id -> new GuildMusicManager(managerHolder));
+        return sessions.computeIfAbsent(guildId, id -> new GuildMusicManager(id, managerHolder));
     }
 }

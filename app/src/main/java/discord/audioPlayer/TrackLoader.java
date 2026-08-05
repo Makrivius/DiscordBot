@@ -14,105 +14,89 @@ import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import dev.arbjerg.lavalink.client.Link;
+import dev.arbjerg.lavalink.client.player.LavalinkLoadResult;
+import dev.arbjerg.lavalink.client.player.LoadFailed;
+import dev.arbjerg.lavalink.client.player.NoMatches;
+import dev.arbjerg.lavalink.client.player.PlaylistLoaded;
+import dev.arbjerg.lavalink.client.player.SearchResult;
+import dev.arbjerg.lavalink.client.player.Track;
+import dev.arbjerg.lavalink.client.player.TrackLoaded;
+
 public class TrackLoader {
     private final Logger log = LoggerFactory.getLogger(TrackLoader.class);
     private final AudioPlayerManager playerManager;
+    private final Link link;
     private final TrackScheduler scheduler;
 
-    public TrackLoader(AudioPlayerManager playerManager, TrackScheduler scheduler) {
+    public TrackLoader(AudioPlayerManager playerManager, Link link, TrackScheduler scheduler) {
         this.playerManager = playerManager;
+        this.link = link;
         this.scheduler = scheduler;
     }
 
-    public void enqueueById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
-        playerManager.loadItemOrdered(this, trackId, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                scheduler.enqueue(track);
-                onSuccess.accept(track);
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                onFail.accept("Unexpected playlist for this track: " + trackId);
-            }
-
-            @Override
-            public void noMatches() {
-                onFail.accept("Track not found: " + trackId);
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                onFail.accept("Load failed due to: " + exception.getMessage());
-            }
-        });
+    public void enqueueById(String trackId, Consumer<Track> onSuccess, Consumer<String> onFail) {
+        link.loadItem(trackId).subscribe(result -> onSingleTrackLoaded(result, trackId, onFail, track -> {
+            scheduler.enqueue(track);
+            onSuccess.accept(track);
+        }),
+                err -> {
+                    log.error("loadItem failed for '{}' on node '{}'", trackId,
+                            link.getNode() != null ? link.getNode().getName() : "unknown", err);
+                    onFail.accept("Load failed: " + err.getMessage());
+                });
         scheduler.resume();
     }
 
-    public void playNowById(String trackId, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
-        playerManager.loadItemOrdered(this, trackId, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                scheduler.enqueue(track);
-                scheduler.jumpTo(scheduler.getQueue().size() - 1);
-                onSuccess.accept(track);
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                onFail.accept("Unexpected playlist for this track: " + trackId);
-            }
-
-            @Override
-            public void noMatches() {
-                onFail.accept("Track not found: " + trackId);
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                onFail.accept("Load failed due to: " + exception.getMessage());
-            }
-        });
+    public void playNowById(String trackId, Consumer<Track> onSuccess, Consumer<String> onFail) {
+        link.loadItem(trackId).subscribe(result -> onSingleTrackLoaded(result, trackId, onFail, track -> {
+            scheduler.enqueue(track);
+            scheduler.jumpTo(scheduler.getQueue().size() - 1);
+            onSuccess.accept(track);
+        }),
+                err -> {
+                    log.error("loadItem failed for '{}' on node '{}'", trackId,
+                            link.getNode() != null ? link.getNode().getName() : "unknown", err);
+                    onFail.accept("Load failed: " + err.getMessage());
+                });
         scheduler.resume();
     }
 
-    public void loadAndQueue(String query, boolean shuffle, Consumer<AudioTrack> onSuccess, Consumer<String> onFail) {
+    public void loadAndQueue(String query, boolean shuffle, Consumer<Track> onSuccess, Consumer<String> onFail) {
         String lookup = normalizeQuery(query);
 
-        playerManager.loadItemOrdered(this, lookup, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                scheduler.enqueue(track);
-                onSuccess.accept(track);
-            }
-
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                if (playlist.isSearchResult()) {
-                    AudioTrack top = playlist.getTracks().getFirst();
+        link.loadItem(lookup).subscribe(result -> {
+            switch (result) {
+                case TrackLoaded loaded -> {
+                    Track track = loaded.getTrack();
+                    scheduler.enqueue(track);
+                    onSuccess.accept(track);
+                }
+                case PlaylistLoaded playlistLoaded -> {
+                    List<Track> tracks = new ArrayList<>(playlistLoaded.getTracks());
+                    if (shuffle)
+                        Collections.shuffle(tracks);
+                    tracks.forEach(scheduler::enqueue);
+                    onSuccess.accept(tracks.get(0));
+                }
+                case SearchResult searchResult -> {
+                    Track top = searchResult.getTracks().getFirst();
                     scheduler.enqueue(top);
                     onSuccess.accept(top);
-                    return;
                 }
-                List<AudioTrack> tracks = new ArrayList<>(playlist.getTracks());
-                if (shuffle)
-                    Collections.shuffle(tracks);
-                tracks.forEach(scheduler::enqueue);
-                onSuccess.accept(tracks.getFirst());
+                case NoMatches _ -> {
+                    log.warn("No matches for query {}", query);
+                    onFail.accept("No matches found for: " + query);
+                }
+                case LoadFailed failed -> {
+                    log.error("Load failed due to: {}", failed.getException().getMessage());
+                    onFail.accept("Failed to load: " + failed.getException().getMessage());
+                }
+                default -> onFail.accept("Unexpected result for: " + query);
             }
-
-            @Override
-            public void noMatches() {
-                log.warn("No Matches for query {}", query);
-                onFail.accept("No matches found for : " + query);
-            }
-
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                log.error("Load failed for query '{}'", query, exception);
-                onFail.accept("Failed to load: " + exception.getMessage());
-            }
+        }, err -> {
+            log.error("Load failed for query '{}'", query, err);
+            onFail.accept("Failed to load: " + err.getMessage());
         });
         scheduler.resume();
     }
@@ -152,4 +136,13 @@ public class TrackLoader {
         return query.startsWith("http") ? query : "ytsearch:" + query;
     }
 
+    private void onSingleTrackLoaded(LavalinkLoadResult result, String context, Consumer<String> onFail,
+            Consumer<Track> onTrack) {
+        switch (result) {
+            case TrackLoaded loaded -> onTrack.accept(loaded.getTrack());
+            case NoMatches _ -> onFail.accept("Track not found: " + context);
+            case LoadFailed failed -> onFail.accept("Load failed due to: " + failed.getException().getMessage());
+            default -> onFail.accept("Unexpected result for: " + context);
+        }
+    }
 }
