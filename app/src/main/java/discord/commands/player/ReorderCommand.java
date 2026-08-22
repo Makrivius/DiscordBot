@@ -2,12 +2,15 @@ package discord.commands.player;
 
 import java.util.List;
 
+import org.springframework.stereotype.Component;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
+@Component
 public class ReorderCommand implements Command {
     private static final Gson gson = new Gson();
 

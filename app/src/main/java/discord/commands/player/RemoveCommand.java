@@ -1,8 +1,11 @@
 package discord.commands.player;
 
+import org.springframework.stereotype.Component;
+
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
+@Component
 public class RemoveCommand implements Command {
     @Override
     public String name() {

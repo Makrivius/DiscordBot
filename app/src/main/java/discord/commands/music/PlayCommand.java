@@ -1,11 +1,14 @@
 package discord.commands.music;
 
+import org.springframework.stereotype.Component;
+
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
+@Component
 public class PlayCommand implements Command {
     @Override
     public String name() {
