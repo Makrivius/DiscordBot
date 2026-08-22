@@ -1,11 +1,14 @@
 package discord.commands;
 
+import org.springframework.stereotype.Component;
+
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
 
 import discord.audioPlayer.PlayerStateDTO.SearchResultDTO;
 import discord.util.ThumbnailUtil;
 
+@Component
 public class SearchCommand implements Command {
     @Override
     public String name() {

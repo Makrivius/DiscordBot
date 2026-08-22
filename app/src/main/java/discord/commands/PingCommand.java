@@ -1,5 +1,8 @@
 package discord.commands;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class PingCommand implements Command {
     @Override
     public String name() {
