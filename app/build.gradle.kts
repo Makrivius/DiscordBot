@@ -2,6 +2,8 @@ plugins {
     application
     id("com.gradleup.shadow") version "9.3.0"
     id("com.github.ben-manes.versions") version "0.53.0"
+    id("org.springframework.boot") version "4.1.1"
+    id("io.spring.dependency-management") version "1.1.7"
 }
 
 // Global Dependency Versions
@@ -9,8 +11,6 @@ object Versions {
     const val jda = "latest.release"
     const val javalin = "latest.release"
     const val reflections = "latest.release"
-    const val slf4j = "latest.release"
-    const val logbackClassic = "latest.release"
     const val javaDotenv = "latest.release"
     const val gson = "latest.release"
     const val lavaLink = "latest.release"
@@ -29,6 +29,10 @@ repositories {
 }
 
 dependencies {
+    // Spring framework
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+
     // JDA & Audio Natives
     implementation("club.minnced:jdave-api:${Versions.jdaVea}")
     implementation("club.minnced:jdave-native-linux-x86-64:${Versions.jdaVea}")
@@ -49,8 +53,8 @@ dependencies {
     implementation("com.google.code.gson:gson:${Versions.gson}")
 
     // Logging Framework
-    implementation("org.slf4j:slf4j-api:${Versions.slf4j}")
-    implementation("ch.qos.logback:logback-classic:${Versions.logbackClassic}")
+    implementation("org.slf4j:slf4j-api")
+    implementation("ch.qos.logback:logback-classic:")
 
     // Database
     implementation("org.xerial:sqlite-jdbc:${Versions.sqliteJdbc}")
@@ -83,4 +87,13 @@ tasks.named<ProcessResources>("processResources") {
 
 tasks.named<Test>("test") {
     useJUnitPlatform()
+}
+
+// Spring block
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = false
+}
+
+tasks.named<Jar>("jar") {
+    enabled = true
 }
