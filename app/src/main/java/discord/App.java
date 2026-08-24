@@ -38,12 +38,13 @@ public class App {
                 LavalinkClient lavalinkClient = audioHolder.getAudioPlayerManager();
                 new NodeHealthChecker().registerAndWatch(lavalinkClient);
 
-                CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
-                registry.provide(sessions);
-                registry.discoverAndRegister("discord.commands");
+                // CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
+                // registry.provide(sessions);
+                // registry.discoverAndRegister("discord.commands");
 
-                DiscordCommandDispatcher dispatcher = new DiscordCommandDispatcher(registry, sessions,
-                                config.defaultPrefix());
+                // DiscordCommandDispatcher dispatcher = new DiscordCommandDispatcher(registry,
+                // sessions,
+                // config.defaultPrefix());
 
                 EnumSet<GatewayIntent> gatewayIntents = EnumSet
                                 .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT);
@@ -54,15 +55,16 @@ public class App {
                 JDA jda = JDABuilder
                                 .createDefault(config.token())
                                 .enableIntents(gatewayIntents)
-                                .addEventListeners(new DiscordListener(dispatcher))
+                                // .addEventListeners(new DiscordListener(dispatcher))
                                 .setVoiceDispatchInterceptor(new JDAVoiceUpdateListener(lavalinkClient))
                                 .setAudioModuleConfig(new AudioModuleConfig()
                                                 .withDaveSessionFactory(new JDaveSessionFactory()))
                                 .build().awaitReady();
                 log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
 
-                AppServer server = new AppServer(config.clientId(), config.secret(), sessions, registry, jda);
-                server.start(config.wsPort());
-                log.info("Server started on port {}", config.wsPort());
+                // AppServer server = new AppServer(config.clientId(), config.secret(),
+                // sessions, registry, jda);
+                // server.start(config.wsPort());
+                // log.info("Server started on port {}", config.wsPort());
         }
 }

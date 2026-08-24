@@ -32,6 +32,7 @@ dependencies {
     // Spring framework
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
 
     // JDA & Audio Natives
     implementation("club.minnced:jdave-api:${Versions.jdaVea}")
