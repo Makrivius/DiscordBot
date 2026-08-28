@@ -1,70 +1,29 @@
 package discord;
 
-import java.util.EnumSet;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
-import club.minnced.discord.jdave.interop.JDaveSessionFactory;
-import dev.arbjerg.lavalink.client.LavalinkClient;
-import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
-import discord.audioPlayer.AudioPlayerManagerHolder;
-import discord.audioPlayer.nodes.NodeHealthChecker;
-import discord.commands.CommandRegistry;
-import discord.commands.DiscordCommandDispatcher;
-import discord.guild.SessionRegistry;
-import discord.hooks.DiscordListener;
-import discord.http.AppServer;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.audio.AudioModuleConfig;
-import net.dv8tion.jda.api.requests.GatewayIntent;
 
+@SpringBootApplication
+@EnableConfigurationProperties(BotProperties.class)
 public class App {
         private static final Logger log = LoggerFactory.getLogger(App.class);
 
-        public static void main(String[] args) throws Exception {
-                Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
-                        log.error("Uncaught exception on thread {}", thread.getName(), ex);
-                });
+        public static void main(String[] args) {
+                SpringApplication.run(App.class, args);
+        }
 
-                BotConfig config = BotConfig.load();
-                log.info("Config loaded ");
-
-                AudioPlayerManagerHolder audioHolder = new AudioPlayerManagerHolder(config.token());
-                SessionRegistry sessions = new SessionRegistry(audioHolder);
-
-                // YOOOOOOOOOOOOOOOOOOOOOOOO
-                LavalinkClient lavalinkClient = audioHolder.getAudioPlayerManager();
-                new NodeHealthChecker().registerAndWatch(lavalinkClient);
-
-                // CommandRegistry registry = new CommandRegistry(config.defaultPrefix());
-                // registry.provide(sessions);
-                // registry.discoverAndRegister("discord.commands");
-
-                // DiscordCommandDispatcher dispatcher = new DiscordCommandDispatcher(registry,
-                // sessions,
-                // config.defaultPrefix());
-
-                EnumSet<GatewayIntent> gatewayIntents = EnumSet
-                                .of(GatewayIntent.GUILD_VOICE_STATES, GatewayIntent.MESSAGE_CONTENT);
-                if (gatewayIntents.isEmpty()) {
-                        log.error("Gateway intents are missing!");
-                        return;
-                }
-                JDA jda = JDABuilder
-                                .createDefault(config.token())
-                                .enableIntents(gatewayIntents)
-                                // .addEventListeners(new DiscordListener(dispatcher))
-                                .setVoiceDispatchInterceptor(new JDAVoiceUpdateListener(lavalinkClient))
-                                .setAudioModuleConfig(new AudioModuleConfig()
-                                                .withDaveSessionFactory(new JDaveSessionFactory()))
-                                .build().awaitReady();
-                log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
-
-                // AppServer server = new AppServer(config.clientId(), config.secret(),
-                // sessions, registry, jda);
-                // server.start(config.wsPort());
-                // log.info("Server started on port {}", config.wsPort());
+        @Bean
+        CommandLineRunner onJDAReady(JDA jda) {
+                return args -> {
+                        log.info("JDA is ready!");
+                        log.info("Logged in as: " + jda.getSelfUser().getAsTag());
+                };
         }
 }

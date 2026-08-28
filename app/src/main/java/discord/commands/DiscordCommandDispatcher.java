@@ -1,7 +1,5 @@
 package discord.commands;
 
-import javax.annotation.Nonnull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +16,7 @@ public class DiscordCommandDispatcher {
     private final VoiceConnector voiceConnector;
     private final String prefix;
 
-    public DiscordCommandDispatcher(CommandRegistry registry,
-            SessionRegistry sessions,
-            String prefix) {
+    public DiscordCommandDispatcher(CommandRegistry registry, SessionRegistry sessions, String prefix) {
         this.registry = registry;
         this.sessions = sessions;
         this.voiceConnector = new VoiceConnector(sessions);
@@ -51,9 +47,9 @@ public class DiscordCommandDispatcher {
         ArgParser parsed = new ArgParser(java.util.Arrays.copyOfRange(parts, 1, parts.length));
         CommandContext ctx = new CommandContext(event.getGuild().getIdLong(),
                 sessions.get(event.getGuild().getIdLong()), parsed.positional(), parsed.named(),
-                (@Nonnull String msg) -> event.getChannel().sendMessage(msg).queue(),
-                (@Nonnull String err) -> event.getChannel().sendMessage(err).queue(),
-                (@Nonnull Object payload) -> {
+                (String msg) -> event.getChannel().sendMessage(java.util.Objects.requireNonNull(msg)).queue(),
+                (String err) -> event.getChannel().sendMessage(java.util.Objects.requireNonNull(err)).queue(),
+                (Object payload) -> {
                     String message = payload.toString();
                     if (message.isBlank() || message.isEmpty()) {
                         log.warn("Payload for the command {} is empty", cmdName);
