@@ -9,9 +9,6 @@ plugins {
 // Global Dependency Versions
 object Versions {
     const val jda = "latest.release"
-    const val javalin = "latest.release"
-    const val reflections = "latest.release"
-    const val javaDotenv = "latest.release"
     const val gson = "latest.release"
     const val lavaLink = "latest.release"
     const val lavaPlayer = "latest.release"
@@ -30,6 +27,8 @@ repositories {
 
 dependencies {
     // Spring framework
+	implementation ("org.springframework.boot:spring-boot-starter-actuator")
+
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -40,7 +39,6 @@ dependencies {
     implementation("club.minnced:jdave-native-linux-aarch64:${Versions.jdaVea}")
     implementation("club.minnced:jdave-native-win-x86-64:${Versions.jdaVea}")
     implementation("net.dv8tion:JDA:${Versions.jda}")
-    implementation("io.javalin:javalin:${Versions.javalin}")
 
     // Audio Player & Plugins
     implementation("dev.arbjerg:lavalink-client:${Versions.lavaLink}")
@@ -49,8 +47,6 @@ dependencies {
     implementation("com.github.topi314.lavasrc:lavasrc:${Versions.lavaSrc}")
     implementation("com.github.topi314.lavasrc:protocol-jvm:${Versions.lavaSrc}")
     // Reflection & Utilities
-    implementation("org.reflections:reflections:${Versions.reflections}")
-    implementation("io.github.cdimascio:java-dotenv:${Versions.javaDotenv}")
     implementation("com.google.code.gson:gson:${Versions.gson}")
 
     // Logging Framework

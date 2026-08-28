@@ -1,8 +1,7 @@
 package discord.hooks;
 
-import javax.annotation.Nonnull;
-
 import discord.commands.DiscordCommandDispatcher;
+import jakarta.annotation.Nonnull;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
