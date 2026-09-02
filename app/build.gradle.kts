@@ -27,6 +27,8 @@ repositories {
 
 dependencies {
     // Spring framework
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
 	implementation ("org.springframework.boot:spring-boot-starter-actuator")
 
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -86,11 +88,18 @@ tasks.named<Test>("test") {
     useJUnitPlatform()
 }
 
-// Spring block
+// Corrected Spring Boot Build Block
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    enabled = true
+    archiveFileName.set("app.jar")
+}
+
+// Disable the standard non-runnable JAR task
+tasks.named<Jar>("jar") {
     enabled = false
 }
 
-tasks.named<Jar>("jar") {
-    enabled = true
+// Disable shadowJar entirely so it doesn't interfere
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    enabled = false
 }
