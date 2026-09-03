@@ -16,6 +16,9 @@ public class App {
         private static final Logger log = LoggerFactory.getLogger(App.class);
 
         public static void main(String[] args) {
+                Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
+                        log.error("Uncaught exception on thread {}: {}", thread.getName(), ex.getMessage(), ex);
+                });
                 SpringApplication.run(App.class, args);
         }
 

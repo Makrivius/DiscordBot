@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 
+import dev.arbjerg.lavalink.client.player.Track;
+import dev.arbjerg.lavalink.protocol.v4.Playlist;
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
@@ -28,11 +30,11 @@ public class PlayCommand implements Command {
     }
 
     private String describeResult(Object result, boolean shuffle) {
-        if (result instanceof AudioTrack track) {
-            return "Queued: **" + track.getInfo().title + "**";
-        } else if (result instanceof AudioPlaylist playlist) {
-            return "Queued playlist: **" + playlist.getName() + "** ("
-                    + playlist.getTracks().size() + " tracks" + (shuffle ? ", shuffled" : "") + ")";
+        if (result instanceof Track track) {
+            return "Queued: **" + track.getInfo().getTitle() + "**";
+        } else if (result instanceof Playlist playlist) {
+            return "Queued playlist: **" + playlist.getInfo().getName() + "** (" + playlist.getTracks().size()
+                    + " tracks" + (shuffle ? ", shuffled" : "") + ")";
         }
         return "Queued.";
     }
