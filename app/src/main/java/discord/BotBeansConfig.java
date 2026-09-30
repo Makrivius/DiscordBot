@@ -2,21 +2,21 @@ package discord;
 
 import java.util.EnumSet;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchMusicProvider;
+import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
+import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import dev.arbjerg.lavalink.client.LavalinkClient;
 import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
-import discord.audioPlayer.ManagerHolder;
+import dev.lavalink.youtube.YoutubeAudioSourceManager;
 import discord.audioPlayer.players.lavalink.LavalinkManager;
-import discord.audioPlayer.players.lavalink.LavalinkPlayerWrapper;
-import discord.audioPlayer.players.lavalink.nodes.NodeHealthChecker;
 import discord.commands.CommandRegistry;
 import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
@@ -31,24 +31,31 @@ public class BotBeansConfig {
     private static final Logger log = LoggerFactory.getLogger(BotBeansConfig.class);
 
     @Bean
-    ManagerHolder audioPlayerManagerHolder(BotProperties properties) {
-        // LavalinkManager lavalinkManager = new LavalinkManager(properties.token());
-        // LavalinkPlayerWrapper playerWrapper = new
-        // LavalinkPlayerWrapper(lavalinkManager, null);
-        // YoutubeSearchMusicProvider youtubeSearchMusicProvider = new
-        // YoutubeSearchMusicProvider();
-        return new ManagerHolder();
+    LavalinkManager lavalinkManager(BotProperties properties) {
+        return new LavalinkManager(properties.token());
     }
 
     @Bean
-    SessionRegistry sessionRegistry(ManagerHolder audioHolder) {
-        return new SessionRegistry(audioHolder, Executors.newSingleThreadScheduledExecutor());
+    LavalinkClient lavalinkClient(LavalinkManager manager) {
+        return manager.getLavalinkClient();
+    }
+
+    @Bean
+    ScheduledExecutorService retryExecutor() {
+        return Executors.newSingleThreadScheduledExecutor();
     }
 
     @Bean
     DiscordCommandDispatcher discordCommandDispatcher(CommandRegistry registry, SessionRegistry sessions,
             BotProperties properties) {
         return new DiscordCommandDispatcher(registry, sessions, properties.defaultPrefix());
+    }
+
+    @Bean
+    AudioPlayerManager audioPlayerManager() {
+        var manager = new DefaultAudioPlayerManager();
+        manager.registerSourceManager(new YoutubeAudioSourceManager());
+        return manager;
     }
 
     @Bean

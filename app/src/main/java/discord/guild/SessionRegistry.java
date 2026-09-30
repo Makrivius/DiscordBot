@@ -4,29 +4,40 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 
-import discord.audioPlayer.ManagerHolder;
+import org.springframework.stereotype.Component;
+
+import discord.audioPlayer.PlayerFactory;
 import discord.audioPlayer.TrackLoader;
 import discord.audioPlayer.TrackScheduler;
+import discord.audioPlayer.interfaces.PlayerInterface;
 
+@Component
 public class SessionRegistry {
-    private final ManagerHolder managerHolder;
-    private final ScheduledExecutorService retryExecutor;
-    private final Map<Long, TrackScheduler> schedulers = new ConcurrentHashMap<>();
-    private final Map<Long, TrackLoader> loaders = new ConcurrentHashMap<>();
+    private record Session(TrackScheduler scheduler, TrackLoader loader) {
+    }
 
-    public SessionRegistry(ManagerHolder managerHolder, ScheduledExecutorService retryExecutor) {
-        this.managerHolder = managerHolder;
+    private final PlayerFactory playerFactory;
+    private final ScheduledExecutorService retryExecutor;
+    private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
+
+    public SessionRegistry(PlayerFactory playerFactory, ScheduledExecutorService retryExecutor) {
+        this.playerFactory = playerFactory;
         this.retryExecutor = retryExecutor;
     }
 
-    public TrackScheduler getScheduler(long guildId) {
-        return schedulers.computeIfAbsent(guildId,
-                id -> new TrackScheduler(id, managerHolder.getActiveAudioPlayer(), retryExecutor));
+    private Session session(long guildId) {
+        return sessions.computeIfAbsent(guildId, id -> {
+            PlayerInterface player = playerFactory.create(id);
+            var scheduler = new TrackScheduler(id, player, retryExecutor);
+            return new Session(scheduler, new TrackLoader(scheduler, player, retryExecutor));
+        });
     }
 
-    public TrackLoader getLoader(long guildId) {
-        return loaders.computeIfAbsent(guildId, id -> {
-            return new TrackLoader(getScheduler(id), managerHolder.getActiveAudioPlayer(), retryExecutor);
-        });
+    public TrackScheduler getScheduler(long id) {
+        return session(id).scheduler();
+    }
+
+    public TrackLoader getLoader(long id) {
+        return session(id).loader();
     }
 }

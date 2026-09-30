@@ -109,6 +109,8 @@ public class LavalinkPlayerWrapper implements PlayerInterface {
 
     @Override
     public CompletableFuture<LoadResult> load(String query) {
+        if (!query.startsWith("http"))
+            query = "ytsearch:" + query;
         var future = new CompletableFuture<LoadResult>();
         link.loadItem(query).subscribe(result -> future.complete(toLoadResult(result)),
                 err -> future.complete(new LoadResult(LoadStatus.FAILED, List.of(), err.getMessage())));

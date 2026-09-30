@@ -1,12 +1,10 @@
 package discord.commands.music;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-
-import dev.arbjerg.lavalink.client.player.PlaylistLoaded;
-import dev.arbjerg.lavalink.client.player.Track;
+import discord.audioPlayer.interfaces.TrackInterface;
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
@@ -29,12 +27,12 @@ public class PlayCommand implements Command {
                 error -> ctx.error(error.isEmpty() ? "Unknown error" : error));
     }
 
-    private String describeResult(Object result, boolean shuffle) {
-        if (result instanceof Track track) {
-            return "Queued: **" + track.getInfo().getTitle() + "**";
-        } else if (result instanceof PlaylistLoaded playlist) {
-            return "Queued playlist: **" + playlist.getInfo().getName() + "** (" + playlist.getTracks().size()
-                    + " tracks" + (shuffle ? ", shuffled" : "") + ")";
+    private String describeResult(List<TrackInterface> result, boolean shuffle) {
+        if (result.size() == 1) {
+            return "Queued: **" + result.getFirst().getTitle() + "**";
+        } else if (result.size() > 1) {
+            return "Queued playlist: **" + "Ahahha ne sdelal" + "** (" + result.size() + " tracks"
+                    + (shuffle ? ", shuffled" : "") + ")";
         }
         return "Queued.";
     }

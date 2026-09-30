@@ -17,9 +17,13 @@ public class EnqueueCommand implements Command {
     public void execute(CommandContext ctx) {
         String trackId = ctx.named("trackId");
         if (trackId == null || trackId.isBlank()) {
+            trackId = String.join(" ", ctx.positionArgs());
+        }
+        if (trackId.isBlank()) {
             ctx.error("Missing trackId");
             return;
         }
+
         ctx.trackLoader().enqueueById(trackId, obj -> {
             TrackInterface track = (TrackInterface) obj;
             ctx.reply("Queued: **" + track.getTitle() + "**");

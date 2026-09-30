@@ -2,14 +2,19 @@ package discord.commands;
 
 import org.springframework.stereotype.Component;
 
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrackInfo;
-
 import discord.audioPlayer.PlayerStateDTO.SearchResultDTO;
+import discord.audioPlayer.search.SearchHit;
+import discord.services.SearchService;
 import discord.util.ThumbnailUtil;
 
 @Component
 public class SearchCommand implements Command {
+    private final SearchService searchService;
+
+    public SearchCommand(SearchService searchService) {
+        this.searchService = searchService;
+    }
+
     @Override
     public String name() {
         return "search";
@@ -18,20 +23,22 @@ public class SearchCommand implements Command {
     @Override
     public void execute(CommandContext ctx) {
         String query = ctx.named("query");
-        String requestId = ctx.named("requestId");
-        if (query == null || query.isBlank() || requestId.isBlank()) {
-            ctx.error("Missing query or requestId");
+        if (query == null || query.isBlank()) {
+            query = String.join(" ", ctx.positionArgs());
+        }
+        if (query.isBlank()) {
+            ctx.error("Missing query");
             return;
         }
-        // ctx.trackLoader().search(query, results ->
-        // ctx.replyData(results.stream().map(this::toDto).toList()),
-        // ctx::error);
+
+        searchService.search(query).thenAccept(hits -> ctx.replyData(hits.stream().map(this::toDto).toList()))
+                .exceptionally(e -> {
+                    ctx.error("Search failed");
+                    return null;
+                });
     }
 
-    private SearchResultDTO toDto(AudioTrack track) {
-        AudioTrackInfo info = track.getInfo();
-        return new SearchResultDTO(track.getIdentifier(), info.title, info.author, info.length,
-                ThumbnailUtil.getThumbnails(track.getIdentifier()));
+    private SearchResultDTO toDto(SearchHit h) {
+        return new SearchResultDTO(h.id(), h.title(), h.author(), h.durationMs(), ThumbnailUtil.getThumbnails(h.id()));
     }
-
 }
