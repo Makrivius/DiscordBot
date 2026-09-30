@@ -1,17 +1,22 @@
 package discord;
 
 import java.util.EnumSet;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.sedmelluq.discord.lavaplayer.source.youtube.YoutubeSearchMusicProvider;
+
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
 import dev.arbjerg.lavalink.client.LavalinkClient;
 import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
-import discord.audioPlayer.AudioPlayerManagerHolder;
-import discord.audioPlayer.nodes.NodeHealthChecker;
+import discord.audioPlayer.ManagerHolder;
+import discord.audioPlayer.players.lavalink.LavalinkManager;
+import discord.audioPlayer.players.lavalink.LavalinkPlayerWrapper;
+import discord.audioPlayer.players.lavalink.nodes.NodeHealthChecker;
 import discord.commands.CommandRegistry;
 import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
@@ -26,20 +31,18 @@ public class BotBeansConfig {
     private static final Logger log = LoggerFactory.getLogger(BotBeansConfig.class);
 
     @Bean
-    AudioPlayerManagerHolder audioPlayerManagerHolder(BotProperties properties) {
-        return new AudioPlayerManagerHolder(properties.token());
+    ManagerHolder audioPlayerManagerHolder(BotProperties properties) {
+        // LavalinkManager lavalinkManager = new LavalinkManager(properties.token());
+        // LavalinkPlayerWrapper playerWrapper = new
+        // LavalinkPlayerWrapper(lavalinkManager, null);
+        // YoutubeSearchMusicProvider youtubeSearchMusicProvider = new
+        // YoutubeSearchMusicProvider();
+        return new ManagerHolder();
     }
 
     @Bean
-    SessionRegistry sessionRegistry(AudioPlayerManagerHolder audioHolder) {
-        return new SessionRegistry(audioHolder);
-    }
-
-    @Bean
-    LavalinkClient lavalinkClient(AudioPlayerManagerHolder audioHolder) {
-        LavalinkClient client = audioHolder.getAudioPlayerManager();
-        new NodeHealthChecker().registerAndWatch(client);
-        return client;
+    SessionRegistry sessionRegistry(ManagerHolder audioHolder) {
+        return new SessionRegistry(audioHolder, Executors.newSingleThreadScheduledExecutor());
     }
 
     @Bean
@@ -57,12 +60,11 @@ public class BotBeansConfig {
             log.error("None gateway intents are persisted!");
             throw new InterruptedException();
         }
-        JDA jda = JDABuilder.createDefault(properties.token())
-                .enableIntents(gatewayIntents)
+        JDA jda = JDABuilder.createDefault(properties.token()).enableIntents(gatewayIntents)
                 .addEventListeners(new DiscordListener(dispatcher))
                 .setVoiceDispatchInterceptor(new JDAVoiceUpdateListener(lavalinkClient))
-                .setAudioModuleConfig(new AudioModuleConfig().withDaveSessionFactory(new JDaveSessionFactory()))
-                .build().awaitReady();
+                .setAudioModuleConfig(new AudioModuleConfig().withDaveSessionFactory(new JDaveSessionFactory())).build()
+                .awaitReady();
         log.info("Bot is ready as {}", jda.getSelfUser().getAsTag());
         return jda;
     }

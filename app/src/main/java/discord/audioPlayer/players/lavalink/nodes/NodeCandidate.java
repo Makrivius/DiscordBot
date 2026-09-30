@@ -1,4 +1,4 @@
-package discord.audioPlayer.nodes;
+package discord.audioPlayer.players.lavalink.nodes;
 
 import java.util.List;
 

@@ -19,7 +19,7 @@ public class JumpCommand implements Command {
             if (index < 0) {
                 ctx.error("Jump index is below zero");
             }
-            ctx.musicManager().jumpTo(index);
+            ctx.trackScheduler().jumpTo(index);
         } catch (Exception e) {
             ctx.error("Couldn't parse the jump index");
         }

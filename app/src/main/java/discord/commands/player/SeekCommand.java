@@ -19,6 +19,6 @@ public class SeekCommand implements Command {
             ctx.error("Missing positionMs");
             return;
         }
-        ctx.musicManager().seek(Long.parseLong(pos));
+        ctx.trackScheduler().seek(Long.parseLong(pos));
     }
 }

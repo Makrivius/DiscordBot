@@ -1,4 +1,4 @@
-package discord.audioPlayer.nodes;
+package discord.audioPlayer.players.lavalink.nodes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,21 +16,17 @@ public class NodeHealthChecker {
                 event.getNode().getName(), event.getResumed(), event.getSessionId()));
 
         client.on(WebSocketClosedEvent.class).subscribe(event -> log.warn(
-                "Node '{}' websocket closed for guild {} (code={}, reason={}, byRemote={})",
-                event.getNode().getName(), event.getGuildId(), event.getCode(), event.getCode(), event.getReason(),
-                event.getByRemote()));
+                "Node '{}' websocket closed for guild {} (code={}, reason={}, byRemote={})", event.getNode().getName(),
+                event.getGuildId(), event.getCode(), event.getCode(), event.getReason(), event.getByRemote()));
 
         for (NodeCandidate c : NodeCandidate.CANDIDATES) {
             try {
                 String scheme = c.secure() ? "https" : "http";
-                NodeOptions options = new NodeOptions.Builder()
-                        .setName(c.identifier())
-                        .setServerUri(scheme + "://" + c.host() + ":" + c.port())
-                        .setPassword(c.password())
-                        .build();
+                NodeOptions options = new NodeOptions.Builder().setName(c.identifier())
+                        .setServerUri(scheme + "://" + c.host() + ":" + c.port()).setPassword(c.password()).build();
                 client.addNode(options);
-                log.info("Added candidate node '{}' ({}:{}), waiting for ReadyEvent...",
-                        c.identifier(), c.host(), c.port());
+                log.info("Added candidate node '{}' ({}:{}), waiting for ReadyEvent...", c.identifier(), c.host(),
+                        c.port());
             } catch (Exception e) {
                 log.warn("Failed to add candidate node '{}': {}", c.identifier(), e.getMessage());
             }

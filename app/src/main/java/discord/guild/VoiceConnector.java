@@ -3,6 +3,7 @@ package discord.guild;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import discord.audioPlayer.TrackScheduler;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
@@ -18,8 +19,8 @@ public class VoiceConnector {
     }
 
     /**
-     * Ensures that bot is connected to the voice channel that {@code memberId}
-     * is currently in, for given guild.
+     * Ensures that bot is connected to the voice channel that {@code memberId} is
+     * currently in, for given guild.
      * 
      * @return true if connected now or already, false if member isn't in voice
      *         channel.
@@ -42,8 +43,8 @@ public class VoiceConnector {
             return false;
         }
 
-        GuildMusicManager manager = sessions.get(guild.getIdLong());
-        manager.setChannelName(audioChannel.getName());
+        TrackScheduler scheduler = sessions.getScheduler(guild.getIdLong());
+        scheduler.setChannelName(audioChannel.getName());
 
         guild.getJDA().getDirectAudioController().connect(audioChannel);
         return true;

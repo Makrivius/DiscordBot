@@ -14,6 +14,6 @@ public class ClearQueueCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().clearQueue();
+        ctx.trackScheduler().clearQueue();
     }
 }

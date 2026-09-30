@@ -19,6 +19,6 @@ public class RemoveCommand implements Command {
             ctx.error("Missing queueId");
             return;
         }
-        ctx.musicManager().remove(queueId);
+        ctx.trackScheduler().remove(queueId);
     }
 }

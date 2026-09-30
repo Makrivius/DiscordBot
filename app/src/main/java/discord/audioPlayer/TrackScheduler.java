@@ -4,49 +4,72 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
-import dev.arbjerg.lavalink.client.LavalinkClient;
-import dev.arbjerg.lavalink.client.Link;
-import dev.arbjerg.lavalink.client.event.TrackEndEvent;
-import dev.arbjerg.lavalink.client.player.Track;
+import discord.audioPlayer.interfaces.PlayerInterface;
+import discord.audioPlayer.interfaces.PlayerInterface.PlayResult;
+import discord.audioPlayer.interfaces.TrackInterface;
 
 public class TrackScheduler {
     private static Logger log = LoggerFactory.getLogger(TrackScheduler.class);
+    private static final int MAX_CONNECTING_RETRIES = 5;
 
-    private final Link link;
-    private final List<Track> queue = new ArrayList<>();
+    private final List<Consumer<PlayerStateDTO>> listeners = new CopyOnWriteArrayList<>();
+
+    private final PlayerInterface player;
+    private final ScheduledExecutorService retryExecutor;
+    private final List<TrackInterface> queue = new ArrayList<>();
+
     private boolean shuffle = false;
     private String repeatMode = "off";
     private int currentIndex = -1;
-    private Runnable onStateChange;
 
-    public List<Track> getQueue() {
+    private String channelName;
+
+    public TrackScheduler(long guildId, PlayerInterface player, ScheduledExecutorService retryExecutor) {
+        this.player = player;
+        this.retryExecutor = retryExecutor;
+        player.setOnTrackEnd(this::onTrackEnd);
+        player.setBroadcastFunction(this::broadcast);
+    }
+
+    public void setChannelName(String channelName) {
+        this.channelName = channelName;
+    }
+
+    public String getChannelName() {
+        return channelName;
+    }
+
+    public List<TrackInterface> getQueue() {
         return List.copyOf(queue);
     }
 
-    public Track getCurrentTrack() {
-        var player = link.getCachedPlayer();
-        return player != null ? player.getTrack() : null;
-    }
-
-    public long getCurrentPosition() {
-        var player = link.getCachedPlayer();
-        return player != null ? player.getPosition() : 0L;
+    public void clearQueue() {
+        queue.clear();
     }
 
     public boolean isEmpty() {
         return queue.isEmpty();
     }
 
+    public TrackInterface getCurrentTrack() {
+        return player.getCurrentTrack();
+    }
+
+    public long getCurrentPosition() {
+        return player.getCurrentPosition();
+    }
+
     public boolean isPaused() {
-        var player = link.getCachedPlayer();
-        return player != null && Boolean.TRUE.equals(player.getPaused());
+        return player.isPaused();
     }
 
     public boolean isShuffle() {
@@ -61,19 +84,19 @@ public class TrackScheduler {
         return currentIndex;
     }
 
-    public TrackScheduler(Link link, LavalinkClient lavalinkClient) {
-        this.link = link;
-        lavalinkClient.on(TrackEndEvent.class).filter(event -> event.getGuildId() == link.getGuildId())
-                .subscribe(this::onTrackEnd);
+    public void onStateChange(Consumer<PlayerStateDTO> listener) {
+        listeners.add(listener);
     }
 
-    public void SetBroadcastHook(Runnable callback) {
-        this.onStateChange = callback;
+    public void removeListener(Consumer<PlayerStateDTO> listener) {
+        listeners.remove(listener);
     }
 
-    public void enqueue(Track track) {
-        String queueId = java.util.UUID.randomUUID().toString();
-        track.setUserData(java.util.Map.of("queueId", queueId));
+    public PlayerStateDTO snapshot() {
+        return PlayerStateMapper.toDto(this, channelName);
+    }
+
+    public void enqueue(TrackInterface track) {
         queue.add(track);
         if (getCurrentTrack() == null)
             playIndex(queue.size() - 1);
@@ -82,21 +105,17 @@ public class TrackScheduler {
     }
 
     public void pause() {
-        link.createOrUpdatePlayer().setPaused(true)
-                .subscribe(p -> broadcast(), err -> log.error("Failed to pause", err));
+        player.pause();
     }
 
     public void resume() {
-        link.createOrUpdatePlayer().setPaused(false)
-                .subscribe(p -> broadcast(), err -> log.error("Failed to resume", err));
+        player.resume();
     }
 
     public void previous() {
-        var player = link.getCachedPlayer();
-        Long position = player != null ? player.getPosition() : null;
+        Long position = player != null ? player.getCurrentPosition() : null;
         if (position != null && position >= 3000) {
-            link.createOrUpdatePlayer().setPosition(0L)
-                    .subscribe(p -> broadcast(), err -> log.error("Failed to seek", err));
+            player.setPosition(0L);
             return;
         }
 
@@ -121,9 +140,9 @@ public class TrackScheduler {
 
     public void cycleRepeat() {
         repeatMode = switch (repeatMode) {
-            case "off" -> "track";
-            case "track" -> "queue";
-            default -> "off";
+        case "off" -> "track";
+        case "track" -> "queue";
+        default -> "off";
         };
         broadcast();
     }
@@ -134,7 +153,7 @@ public class TrackScheduler {
             return;
         }
 
-        Track current = currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
+        TrackInterface current = currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
 
         queue.clear();
         if (current != null) {
@@ -177,36 +196,33 @@ public class TrackScheduler {
     }
 
     public void reorder(List<String> newQueueIds) {
-        Map<String, Track> byQueueId = queue.stream()
-                .collect(Collectors.toMap(t -> t.getUserData().toString(), t -> t));
+        Map<String, TrackInterface> byQueueId = queue.stream().collect(Collectors.toMap(t -> t.getQueueId(), t -> t));
 
-        String currentQueueId = currentIndex >= 0 ? queue.get(currentIndex).getUserData().toString() : null;
+        String currentQueueId = currentIndex >= 0 ? queue.get(currentIndex).getQueueId() : null;
 
-        List<Track> reordered = newQueueIds.stream().map(byQueueId::get).filter(Objects::nonNull).toList();
+        List<TrackInterface> reordered = newQueueIds.stream().map(byQueueId::get).filter(Objects::nonNull).toList();
 
         queue.clear();
         queue.addAll(reordered);
 
         if (currentQueueId != null) {
-            currentIndex = queue.stream().map(t -> t.getUserData().toString()).toList().indexOf(currentQueueId);
+            currentIndex = queue.stream().map(t -> t.getQueueId()).toList().indexOf(currentQueueId);
         }
         broadcast();
     }
 
     public void seek(long positionMs) {
-        Track current = link.getCachedPlayer() != null ? link.getCachedPlayer().getTrack() : null;
+        TrackInterface current = player.getCurrentTrack();
         if (current != null) {
-            link.createOrUpdatePlayer().setPosition(positionMs)
-                    .subscribe(p -> broadcast(), err -> log.error("Failed to seek", err));
+            player.setPosition(positionMs);
         }
     }
 
     private int indexOfQueueId(String queueId) {
         for (int i = 0; i < queue.size(); i++) {
-            JsonNode data = queue.get(i).getUserData();
-            if (data != null && data.has("queueId")) {
-                String storedId = data.get("queueId").asText();
-                if (queueId.equals(storedId)) {
+            var data = queue.get(i).getQueueId();
+            if (data != null) {
+                if (queueId.equals(data)) {
                     return i;
                 }
             }
@@ -215,13 +231,29 @@ public class TrackScheduler {
     }
 
     private void playIndex(int i) {
+        playIndexWithRetry(i, 0);
+    }
+
+    private void playIndexWithRetry(int i, int attempt) {
         if (i < 0 || i >= queue.size())
             return;
         currentIndex = i;
-        Track retriedTrack = queue.get(i).makeClone();
-        retriedTrack.setUserData(queue.get(i).getUserData());
-        link.createOrUpdatePlayer().setTrack(retriedTrack).subscribe(player -> broadcast(),
-                err -> log.error("Failed to play track", err));
+
+        player.requestPlay(queue.get(i)).whenComplete((result, err) -> {
+            if (err != null)
+                result = PlayResult.FAILED;
+            switch (result) {
+            case STARTED -> broadcast();
+            case RETRY -> {
+                if (attempt >= MAX_CONNECTING_RETRIES) {
+                    log.error("Giving up on index {} after {} attempts", i, attempt);
+                    return;
+                }
+                retryExecutor.schedule(() -> playIndexWithRetry(i, attempt + 1), 1500, TimeUnit.MILLISECONDS);
+            }
+            case FAILED -> log.error("Play failed for index {}", i);
+            }
+        });
     }
 
     private void advance() {
@@ -231,23 +263,22 @@ public class TrackScheduler {
                 playIndex(0);
             } else {
                 currentIndex = -1;
-                link.createOrUpdatePlayer().setPaused(true).subscribe(player -> broadcast(),
-                        err -> log.error("Failed to pause", err));
+                player.pause();
             }
             return;
         }
         playIndex(nextIndex);
     }
 
-    private void broadcast() {
-        if (onStateChange != null)
-            onStateChange.run();
+    private void notifyListeners(PlayerStateDTO state) {
+        listeners.forEach(l -> l.accept(state));
     }
 
-    private void onTrackEnd(TrackEndEvent event) {
-        if (!event.getEndReason().getMayStartNext()) {
-            return;
-        }
+    private void broadcast() {
+        notifyListeners(snapshot());
+    }
+
+    private void onTrackEnd() {
         if (repeatMode.equals("track")) {
             playIndex(currentIndex);
             return;

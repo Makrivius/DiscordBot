@@ -20,3 +20,5 @@ app/bin/main/schema.sql
 # Ignore logs files for debug
 logs
 
+app/src/main/java/discord/debug/PlayerQueueDebugEndpoint.java
+app/src/main/java/discord/debug/LavalinkDebugEndpoint.java

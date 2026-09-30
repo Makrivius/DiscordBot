@@ -35,6 +35,6 @@ public class ReorderCommand implements Command {
             return;
         }
         System.out.println("raw=" + raw + " parsed=" + trackIds);
-        ctx.musicManager().reorder(trackIds);
+        ctx.trackScheduler().reorder(trackIds);
     }
 }

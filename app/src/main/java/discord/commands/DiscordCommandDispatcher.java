@@ -45,8 +45,9 @@ public class DiscordCommandDispatcher {
             }
         }
         ArgParser parsed = new ArgParser(java.util.Arrays.copyOfRange(parts, 1, parts.length));
-        CommandContext ctx = new CommandContext(event.getGuild().getIdLong(),
-                sessions.get(event.getGuild().getIdLong()), parsed.positional(), parsed.named(),
+        long guildId = event.getGuild().getIdLong();
+        CommandContext ctx = new CommandContext(guildId, sessions.getScheduler(guildId), sessions.getLoader(guildId),
+                parsed.positional(), parsed.named(),
                 (String msg) -> event.getChannel().sendMessage(java.util.Objects.requireNonNull(msg)).queue(),
                 (String err) -> event.getChannel().sendMessage(java.util.Objects.requireNonNull(err)).queue(),
                 (Object payload) -> {

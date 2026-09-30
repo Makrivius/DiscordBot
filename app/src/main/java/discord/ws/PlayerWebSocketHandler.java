@@ -21,10 +21,10 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 import discord.audioPlayer.PlayerStateDTO;
+import discord.audioPlayer.TrackScheduler;
 import discord.commands.Command;
 import discord.commands.CommandContext;
 import discord.commands.CommandRegistry;
-import discord.guild.GuildMusicManager;
 import discord.guild.SessionRegistry;
 import discord.guild.VoiceConnector;
 import discord.util.JsonUtil;
@@ -66,7 +66,7 @@ public class PlayerWebSocketHandler extends TextWebSocketHandler {
         long guildId = Long.parseLong(guildIdParam);
         sessionToGuild.put(session.getId(), guildId);
 
-        GuildMusicManager manager = sessions.get(guildId);
+        TrackScheduler manager = sessions.getScheduler(guildId);
         Consumer<PlayerStateDTO> listener = state -> sendQuietly(session, gson.toJson(state));
         listeners.put(session.getId(), listener);
         manager.onStateChange(listener);
@@ -118,12 +118,13 @@ public class PlayerWebSocketHandler extends TextWebSocketHandler {
             log.warn("Unknown command received: '{}' (guild {})", actionName, guildId);
             return;
         }
-        CommandContext ctx = new CommandContext(guildId, sessions.get(guildId), java.util.List.of(), named, msg -> {
-        }, err -> {
-            log.error("WS command error: {}", err);
-        }, payload -> {
-            sendQuietly(session, gson.toJson(Map.of("type", "searchResults", "results", payload)));
-        });
+        CommandContext ctx = new CommandContext(guildId, sessions.getScheduler(guildId), sessions.getLoader(guildId),
+                java.util.List.of(), named, msg -> {
+                }, err -> {
+                    log.error("WS command error: {}", err);
+                }, payload -> {
+                    sendQuietly(session, gson.toJson(Map.of("type", "searchResults", "results", payload)));
+                });
         try {
             cmd.execute(ctx);
         } catch (Exception e) {
@@ -136,7 +137,7 @@ public class PlayerWebSocketHandler extends TextWebSocketHandler {
         Long guildId = sessionToGuild.remove(session.getId());
         Consumer<PlayerStateDTO> listener = listeners.remove(session.getId());
         if (guildId != null && listener != null) {
-            sessions.get(guildId).removeListener(listener);
+            sessions.getScheduler(guildId).removeListener(listener);
         }
         ScheduledFuture<?> pingTask = pingTasks.remove(session.getId());
         if (pingTask != null) {

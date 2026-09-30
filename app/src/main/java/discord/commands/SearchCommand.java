@@ -23,8 +23,9 @@ public class SearchCommand implements Command {
             ctx.error("Missing query or requestId");
             return;
         }
-        ctx.musicManager().search(query, results -> ctx.replyData(results.stream().map(this::toDto).toList()),
-                ctx::error);
+        // ctx.trackLoader().search(query, results ->
+        // ctx.replyData(results.stream().map(this::toDto).toList()),
+        // ctx::error);
     }
 
     private SearchResultDTO toDto(AudioTrack track) {

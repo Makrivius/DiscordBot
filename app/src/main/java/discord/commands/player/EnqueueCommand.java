@@ -2,6 +2,7 @@ package discord.commands.player;
 
 import org.springframework.stereotype.Component;
 
+import discord.audioPlayer.interfaces.TrackInterface;
 import discord.commands.Command;
 import discord.commands.CommandContext;
 
@@ -19,7 +20,9 @@ public class EnqueueCommand implements Command {
             ctx.error("Missing trackId");
             return;
         }
-        ctx.musicManager().enqueueById(trackId, track -> ctx.reply("Queued: **" + track.getInfo().getTitle() + "**"),
-                error -> ctx.error(error));
+        ctx.trackLoader().enqueueById(trackId, obj -> {
+            TrackInterface track = (TrackInterface) obj;
+            ctx.reply("Queued: **" + track.getTitle() + "**");
+        }, error -> ctx.error(error));
     }
 }

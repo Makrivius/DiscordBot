@@ -4,26 +4,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import discord.guild.GuildMusicManager;
+import discord.audioPlayer.TrackLoader;
+import discord.audioPlayer.TrackScheduler;
 
 public class CommandContext {
     private final long guildId;
-    private final GuildMusicManager musicManager;
+    private final TrackScheduler trackScheduler;
+    private final TrackLoader trackLoader;
     private final List<String> positionalArgs;
     private final Map<String, String> namedArgs;
     private final Consumer<String> reply;
     private final Consumer<String> onError;
     private final Consumer<Object> replyData;
 
-    public CommandContext(long guildId,
-            GuildMusicManager musicManager,
-            List<String> positionalArgs,
-            Map<String, String> namedArgs,
-            Consumer<String> reply,
-            Consumer<String> onError,
-            Consumer<Object> replyData) {
+    public CommandContext(long guildId, TrackScheduler trackScheduler, TrackLoader trackLoader,
+            List<String> positionalArgs, Map<String, String> namedArgs, Consumer<String> reply,
+            Consumer<String> onError, Consumer<Object> replyData) {
         this.guildId = guildId;
-        this.musicManager = musicManager;
+        this.trackScheduler = trackScheduler;
+        this.trackLoader = trackLoader;
         this.positionalArgs = positionalArgs;
         this.namedArgs = namedArgs;
         this.reply = reply;
@@ -35,8 +34,12 @@ public class CommandContext {
         return guildId;
     }
 
-    public GuildMusicManager musicManager() {
-        return musicManager;
+    public TrackScheduler trackScheduler() {
+        return trackScheduler;
+    }
+
+    public TrackLoader trackLoader() {
+        return trackLoader;
     }
 
     public List<String> positionArgs() {

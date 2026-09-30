@@ -14,6 +14,6 @@ public class NextCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().next();
+        ctx.trackScheduler().next();
     }
 }

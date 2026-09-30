@@ -14,6 +14,6 @@ public class ResumeCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().resume();
+        ctx.trackScheduler().resume();
     }
 }

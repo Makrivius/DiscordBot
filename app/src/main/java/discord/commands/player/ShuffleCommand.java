@@ -14,6 +14,6 @@ public class ShuffleCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().toggleShuffle();
+        ctx.trackScheduler().toggleShuffle();
     }
 }

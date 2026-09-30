@@ -14,6 +14,6 @@ public class PauseCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().pause();
+        ctx.trackScheduler().pause();
     }
 }

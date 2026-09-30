@@ -14,6 +14,6 @@ public class PreviousCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().previous();
+        ctx.trackScheduler().previous();
     }
 }

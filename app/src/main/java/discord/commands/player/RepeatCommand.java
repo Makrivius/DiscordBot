@@ -14,6 +14,6 @@ public class RepeatCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.musicManager().cycleRepeat();
+        ctx.trackScheduler().cycleRepeat();
     }
 }
