@@ -22,6 +22,8 @@ public class PlayCommand implements Command {
             return;
         }
         String query = String.join(" ", ctx.positionArgs());
+        if (!query.startsWith("http") || !query.contains(":"))
+            query = "ytsearch:" + query;
         boolean shuffle = ctx.has("shuffle");
         ctx.trackLoader().loadAndQueue(query, shuffle, result -> ctx.reply(describeResult(result, shuffle)),
                 error -> ctx.error(error.isEmpty() ? "Unknown error" : error));

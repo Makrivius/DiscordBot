@@ -5,6 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dev.arbjerg.lavalink.client.LavalinkClient;
 import dev.arbjerg.lavalink.client.Link;
 import dev.arbjerg.lavalink.client.LinkState;
 import dev.arbjerg.lavalink.client.event.TrackEndEvent;
@@ -21,50 +22,49 @@ public class LavalinkPlayerWrapper implements PlayerInterface {
 
     Logger log = LoggerFactory.getLogger(LavalinkPlayerWrapper.class);
 
-    private final LavalinkManager lavalinkManager;
+    private final LavalinkClient lavalinkClient;
     private final Link link;
 
     private Runnable broadcastFunction;
     private Runnable onTrackEndReady = () -> {
     };
 
-    public LavalinkPlayerWrapper(LavalinkManager lavalinkManager, Link link) {
-        this.lavalinkManager = lavalinkManager;
+    public LavalinkPlayerWrapper(LavalinkClient lavalinkManager, Link link) {
+        this.lavalinkClient = lavalinkManager;
         this.link = link;
         setupEvents();
     }
 
     private void setupEvents() {
-        lavalinkManager.getLavalinkClient().on(TrackEndEvent.class).filter(e -> e.getGuildId() == link.getGuildId())
-                .subscribe(e -> {
-                    if (e.getEndReason().getMayStartNext()) {
-                        onTrackEndReady.run();
-                    }
-                });
+        lavalinkClient.on(TrackEndEvent.class).filter(e -> e.getGuildId() == link.getGuildId()).subscribe(e -> {
+            if (e.getEndReason().getMayStartNext()) {
+                onTrackEndReady.run();
+            }
+        });
     }
 
     @Override
     public TrackInterface getCurrentTrack() {
-        var player = lavalinkManager.getCachedPlayer(link);
+        var player = link.getCachedPlayer();
         return player != null ? LavalinkTrack.from(player.getTrack()) : null;
     }
 
     @Override
     public long getCurrentPosition() {
-        var player = lavalinkManager.getCachedPlayer(link);
+        var player = link.getCachedPlayer();
         return player != null ? player.getPosition() : 0L;
     }
 
     @Override
     public void setPosition(long position) {
-        var player = lavalinkManager.getCachedPlayer(link);
+        var player = link.getCachedPlayer();
         player.setPosition(position).subscribe(p -> broadcastFunction.run(),
                 err -> log.error("Failed to set position/seek", err));
     }
 
     @Override
     public boolean isPaused() {
-        var player = lavalinkManager.getCachedPlayer(link);
+        var player = link.getCachedPlayer();
         return player != null && Boolean.TRUE.equals(player.getPaused());
     }
 
@@ -77,23 +77,22 @@ public class LavalinkPlayerWrapper implements PlayerInterface {
             return CompletableFuture.completedFuture(PlayResult.RETRY);
         }
         var future = new CompletableFuture<PlayResult>();
-        lavalinkManager.createOrUpdatePlayer(link).setTrack(lt.getTrack())
-                .subscribe(p -> future.complete(PlayResult.STARTED), err -> {
-                    log.error("Failed to play track", err);
-                    future.complete(PlayResult.FAILED);
-                });
+        link.createOrUpdatePlayer().setTrack(lt.getTrack()).subscribe(p -> future.complete(PlayResult.STARTED), err -> {
+            log.error("Failed to play track", err);
+            future.complete(PlayResult.FAILED);
+        });
         return future;
     }
 
     @Override
     public void resume() {
-        lavalinkManager.createOrUpdatePlayer(link).setPaused(false).subscribe(p -> broadcastFunction.run(),
+        link.createOrUpdatePlayer().setPaused(false).subscribe(p -> broadcastFunction.run(),
                 err -> log.error("Failed to resume", err));
     }
 
     @Override
     public void pause() {
-        lavalinkManager.createOrUpdatePlayer(link).setPaused(true).subscribe(p -> broadcastFunction.run(),
+        link.createOrUpdatePlayer().setPaused(true).subscribe(p -> broadcastFunction.run(),
                 err -> log.error("Failed to pause", err));
     }
 
@@ -109,10 +108,9 @@ public class LavalinkPlayerWrapper implements PlayerInterface {
 
     @Override
     public CompletableFuture<LoadResult> load(String query) {
-        if (!query.startsWith("http"))
-            query = "ytsearch:" + query;
+        String lookup = toIdentifier(query);
         var future = new CompletableFuture<LoadResult>();
-        link.loadItem(query).subscribe(result -> future.complete(toLoadResult(result)),
+        link.loadItem(lookup).subscribe(result -> future.complete(toLoadResult(result)),
                 err -> future.complete(new LoadResult(LoadStatus.FAILED, List.of(), err.getMessage())));
         return future;
     }
@@ -128,6 +126,12 @@ public class LavalinkPlayerWrapper implements PlayerInterface {
         case LoadFailed f -> new LoadResult(LoadStatus.FAILED, List.of(), f.getException().getMessage());
         default -> new LoadResult(LoadStatus.FAILED, List.of(), "Unexpected result");
         };
+    }
+
+    private static String toIdentifier(String q) {
+        if (q.startsWith("http") || q.contains(":") || q.startsWith("ytsearch"))
+            return q;
+        return "https://www.youtube.com/watch?v=" + q;
     }
 
 }

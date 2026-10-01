@@ -13,10 +13,11 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 
 import club.minnced.discord.jdave.interop.JDaveSessionFactory;
+import dev.arbjerg.lavalink.client.Helpers;
 import dev.arbjerg.lavalink.client.LavalinkClient;
 import dev.arbjerg.lavalink.libraries.jda.JDAVoiceUpdateListener;
 import dev.lavalink.youtube.YoutubeAudioSourceManager;
-import discord.audioPlayer.players.lavalink.LavalinkManager;
+import discord.audioPlayer.players.lavalink.nodes.NodeHealthChecker;
 import discord.commands.CommandRegistry;
 import discord.commands.DiscordCommandDispatcher;
 import discord.guild.SessionRegistry;
@@ -31,13 +32,11 @@ public class BotBeansConfig {
     private static final Logger log = LoggerFactory.getLogger(BotBeansConfig.class);
 
     @Bean
-    LavalinkManager lavalinkManager(BotProperties properties) {
-        return new LavalinkManager(properties.token());
-    }
-
-    @Bean
-    LavalinkClient lavalinkClient(LavalinkManager manager) {
-        return manager.getLavalinkClient();
+    LavalinkClient lavalinkClient(BotProperties properties) {
+        long userId = Helpers.getUserIdFromToken(properties.token());
+        LavalinkClient lavalinkClient = new LavalinkClient(userId);
+        new NodeHealthChecker().registerAndWatch(lavalinkClient);
+        return lavalinkClient;
     }
 
     @Bean

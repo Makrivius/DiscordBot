@@ -15,15 +15,17 @@ public class PlayNowCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        String trackId = ctx.named("trackId");
-        if (trackId == null || trackId.isBlank()) {
-            trackId = String.join(" ", ctx.positionArgs());
+        String query = ctx.named("trackId");
+        if (query == null || query.isBlank()) {
+            query = String.join(" ", ctx.positionArgs());
+            if (!query.startsWith("http") || !query.contains(":"))
+                query = "ytsearch:" + query;
         }
-        if (trackId.isBlank()) {
+        if (query.isBlank()) {
             ctx.error("Usage: playnow <url|query>");
             return;
         }
-        ctx.trackLoader().playNowById(trackId, obj -> {
+        ctx.trackLoader().playNowById(query, obj -> {
             TrackInterface track = (TrackInterface) obj;
             ctx.reply("Playing now: **" + track.getTitle() + "**");
         }, ctx::error);

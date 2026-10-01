@@ -27,7 +27,6 @@ public class TrackScheduler {
     private final ScheduledExecutorService retryExecutor;
     private final List<TrackInterface> queue = new ArrayList<>();
 
-    private boolean shuffle = false;
     private String repeatMode = "off";
     private int currentIndex = -1;
 
@@ -48,20 +47,16 @@ public class TrackScheduler {
         return channelName;
     }
 
-    public List<TrackInterface> getQueue() {
+    public synchronized List<TrackInterface> getQueue() {
         return List.copyOf(queue);
-    }
-
-    public void clearQueue() {
-        queue.clear();
     }
 
     public boolean isEmpty() {
         return queue.isEmpty();
     }
 
-    public TrackInterface getCurrentTrack() {
-        return player.getCurrentTrack();
+    public synchronized TrackInterface getCurrentTrack() {
+        return currentIndex >= 0 && currentIndex < queue.size() ? queue.get(currentIndex) : null;
     }
 
     public long getCurrentPosition() {
@@ -73,14 +68,14 @@ public class TrackScheduler {
     }
 
     public boolean isShuffle() {
-        return shuffle;
+        return snapshot().shuffle();
     }
 
     public String getRepeatMode() {
         return repeatMode;
     }
 
-    public int getCurrentIndex() {
+    public synchronized int getCurrentIndex() {
         return currentIndex;
     }
 
@@ -92,13 +87,13 @@ public class TrackScheduler {
         listeners.remove(listener);
     }
 
-    public PlayerStateDTO snapshot() {
-        return PlayerStateMapper.toDto(this, channelName);
+    public synchronized PlayerStateDTO snapshot() {
+        return toDto();
     }
 
-    public void enqueue(TrackInterface track) {
+    public synchronized void enqueue(TrackInterface track) {
         queue.add(track);
-        if (getCurrentTrack() == null)
+        if (player.getCurrentTrack() == null)
             playIndex(queue.size() - 1);
         else
             broadcast();
@@ -112,7 +107,7 @@ public class TrackScheduler {
         player.resume();
     }
 
-    public void previous() {
+    public synchronized void previous() {
         Long position = player != null ? player.getCurrentPosition() : null;
         if (position != null && position >= 3000) {
             player.setPosition(0L);
@@ -129,16 +124,15 @@ public class TrackScheduler {
         playIndex(prevIndex);
     }
 
-    public void next() {
+    public synchronized void next() {
         advance();
     }
 
-    public void toggleShuffle() {
-        shuffle = !shuffle;
+    public synchronized void toggleShuffle() {
         broadcast();
     }
 
-    public void cycleRepeat() {
+    public synchronized void cycleRepeat() {
         repeatMode = switch (repeatMode) {
         case "off" -> "track";
         case "track" -> "queue";
@@ -147,7 +141,7 @@ public class TrackScheduler {
         broadcast();
     }
 
-    public void clearExceptCurrent() {
+    public synchronized void clearExceptCurrent() {
         if (queue.isEmpty()) {
             broadcast();
             return;
@@ -165,7 +159,7 @@ public class TrackScheduler {
         broadcast();
     }
 
-    public void remove(String queueId) {
+    public synchronized void remove(String queueId) {
         int removeIndex = indexOfQueueId(queueId);
         if (removeIndex < 0)
             return;
@@ -186,16 +180,17 @@ public class TrackScheduler {
         broadcast();
     }
 
-    public void jumpTo(int index) {
-        if (queue.size() < index || index < 0) {
+    public synchronized void jumpTo(int index) {
+        if (queue.size() <= index || index < 0) {
             log.error("Invalid position: {} for queue, queue length is: {}", index, queue.size());
+            return;
         }
 
         currentIndex = index;
         playIndex(currentIndex);
     }
 
-    public void reorder(List<String> newQueueIds) {
+    public synchronized void reorder(List<String> newQueueIds) {
         Map<String, TrackInterface> byQueueId = queue.stream().collect(Collectors.toMap(t -> t.getQueueId(), t -> t));
 
         String currentQueueId = currentIndex >= 0 ? queue.get(currentIndex).getQueueId() : null;
@@ -212,10 +207,17 @@ public class TrackScheduler {
     }
 
     public void seek(long positionMs) {
-        TrackInterface current = player.getCurrentTrack();
+        TrackInterface current = getCurrentTrack();
         if (current != null) {
             player.setPosition(positionMs);
         }
+    }
+
+    public PlayerStateDTO toDto() {
+        var trackDtos = getQueue().stream().map(t -> t.toTrackDto()).toList();
+        TrackInterface current = getCurrentTrack();
+        return new PlayerStateDTO("state", channelName, current != null ? getCurrentPosition() : 0L, isPaused(),
+                isShuffle(), getRepeatMode(), trackDtos, getCurrentIndex());
     }
 
     private int indexOfQueueId(String queueId) {

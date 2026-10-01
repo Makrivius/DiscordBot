@@ -3,9 +3,12 @@ package discord.audioPlayer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import discord.audioPlayer.interfaces.PlayerInterface.LoadResult;
 import discord.audioPlayer.interfaces.PlayerInterface;
 import discord.audioPlayer.interfaces.PlayerInterface.LoadStatus;
 import discord.audioPlayer.interfaces.TrackInterface;
@@ -25,33 +28,37 @@ public class TrackLoader {
     }
 
     public void enqueueById(String trackId, Consumer<TrackInterface> onSuccess, Consumer<String> onFail) {
-        player.load(trackId).thenAccept(r -> {
+        loadTrack(trackId).thenAccept(r -> {
             if (r.status() == LoadStatus.OK) {
-                TrackInterface track = r.tracks().getFirst();
-                scheduler.enqueue(track);
                 scheduler.resume();
-                onSuccess.accept(track);
+                onSuccess.accept(r.tracks().getFirst());
             } else if (r.status() == LoadStatus.NO_MATCHES) {
                 onFail.accept("Track not found: " + trackId);
             } else {
                 onFail.accept("Load failed: " + r.error());
             }
+        }).exceptionally(ex -> {
+            onFail.accept("An unexpected error occurred: " + ex.getMessage());
+            return null;
         });
     }
 
-    public void playNowById(String trackId, Consumer<Object> onSuccess, Consumer<String> onFail) {
-        player.load(trackId).thenAccept(r -> {
+    public void playNowById(String trackId, Consumer<TrackInterface> onSuccess, Consumer<String> onFail) {
+        loadTrack(trackId).thenAccept(r -> {
             if (r.status() == LoadStatus.OK) {
-                TrackInterface track = r.tracks().getFirst();
-                scheduler.enqueue(track);
-                scheduler.jumpTo(scheduler.getQueue().size() - 1);
+                if (scheduler.getQueue().size() > 1) {
+                    scheduler.jumpTo(scheduler.getQueue().size() - 1);
+                }
                 scheduler.resume();
-                onSuccess.accept(track);
+                onSuccess.accept(r.tracks().getFirst());
             } else if (r.status() == LoadStatus.NO_MATCHES) {
                 onFail.accept("Track not found: " + trackId);
             } else {
                 onFail.accept("Load failed: " + r.error());
             }
+        }).exceptionally(ex -> {
+            onFail.accept("An unexpected error occurred: " + ex.getMessage());
+            return null;
         });
     }
 
@@ -87,4 +94,15 @@ public class TrackLoader {
             }
         });
     }
+
+    private CompletableFuture<LoadResult> loadTrack(String trackId) {
+        return player.load(trackId).thenApply(r -> {
+            if (r.status() == LoadStatus.OK) {
+                TrackInterface track = r.tracks().getFirst();
+                scheduler.enqueue(track);
+            }
+            return r;
+        });
+    }
+
 }

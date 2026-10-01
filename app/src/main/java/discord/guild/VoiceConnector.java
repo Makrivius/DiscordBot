@@ -2,6 +2,7 @@ package discord.guild;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import discord.audioPlayer.TrackScheduler;
 import net.dv8tion.jda.api.entities.Guild;
@@ -9,6 +10,7 @@ import net.dv8tion.jda.api.entities.GuildVoiceState;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 
+@Component
 public class VoiceConnector {
     private static final Logger log = LoggerFactory.getLogger(VoiceConnector.class);
 

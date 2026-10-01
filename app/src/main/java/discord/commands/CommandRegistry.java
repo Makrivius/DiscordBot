@@ -16,7 +16,7 @@ public class CommandRegistry {
         for (Command c : discovered) {
             try {
                 commands.put(c.name().toLowerCase(), c);
-                log.info("Registered command: {}{}", c.name());
+                log.info("Registered command: {}", c.name());
             } catch (Exception e) {
                 log.error("Failed to load command {}", e);
             }

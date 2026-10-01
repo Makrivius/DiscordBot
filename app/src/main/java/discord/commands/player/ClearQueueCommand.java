@@ -14,6 +14,6 @@ public class ClearQueueCommand implements Command {
 
     @Override
     public void execute(CommandContext ctx) {
-        ctx.trackScheduler().clearQueue();
+        ctx.trackScheduler().clearExceptCurrent();
     }
 }

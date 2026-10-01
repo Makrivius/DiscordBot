@@ -12,6 +12,7 @@ public class ArgParser {
     public ArgParser(String[] args) {
         for (String arg : args) {
             if (arg.startsWith("--")) {
+                arg.toLowerCase();
                 String body = arg.substring(2);
                 int eq = body.indexOf('=');
                 if (eq >= 0) {

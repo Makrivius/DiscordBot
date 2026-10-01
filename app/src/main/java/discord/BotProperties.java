@@ -1,9 +1,6 @@
 package discord;
 
-import java.lang.reflect.Field;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.Errors;
-import org.springframework.validation.Validator;
 import org.springframework.validation.annotation.Validated;
 
 import jakarta.validation.constraints.NotBlank;
@@ -11,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 
 @ConfigurationProperties(prefix = "discord")
 @Validated
-public class BotProperties implements Validator {
+public class BotProperties {
     @NotBlank
     private String token;
 
@@ -76,33 +73,5 @@ public class BotProperties implements Validator {
 
     public void setYoutubeRefreshToken(String youtubeRefreshToken) {
         this.youtubeRefreshToken = youtubeRefreshToken;
-    }
-
-    @Override
-    public boolean supports(Class<?> clazz) {
-        return BotProperties.class.isAssignableFrom(clazz);
-    }
-
-    @Override
-    public void validate(Object target, Errors errors) {
-        BotProperties properties = (BotProperties) target;
-
-        for (Field field : BotProperties.class.getDeclaredFields()) {
-            if (field.getType().equals(String.class)) {
-                try {
-                    Object value = field.get(properties);
-                    checkPlaceholder(field.getName(), value.toString(), errors);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private void checkPlaceholder(String field, String value, Errors errors) {
-        if (value != null && value.trim().startsWith("${")) {
-            errors.rejectValue(field, "unresolved.placeholder",
-                    "The environment variable for '" + field + "' was not resolved or found!");
-        }
     }
 }
